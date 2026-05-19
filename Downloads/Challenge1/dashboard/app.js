@@ -581,21 +581,33 @@ async function startLiveAnalysis(title, source, materials, impactPct, rawText = 
             raw_text: rawText || `FBR notification circular affecting raw imports of ${materials.join(" and ")}.`
         };
 
+        // Enforce a strict 5-second connection timeout so dashboard never hangs on cold starts
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
         const res = await fetch(`${ORCHESTRATOR_API}/v1/incident/process`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(requestPayload)
+            body: JSON.stringify(requestPayload),
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (!res.ok) throw new Error("Orchestrator failed to process");
         
         const data = await res.json();
         const incidentId = data.incident_id;
 
-        // Fetch full generated trace from Firestore status API
-        const statusRes = await fetch(`${ORCHESTRATOR_API}/v1/incident/${incidentId}/status`);
+        // Enforce a strict 4-second timeout on status checks
+        const statusController = new AbortController();
+        const statusTimeoutId = setTimeout(() => statusController.abort(), 4000);
+
+        const statusRes = await fetch(`${ORCHESTRATOR_API}/v1/incident/${incidentId}/status`, {
+            signal: statusController.signal
+        });
+        clearTimeout(statusTimeoutId);
         if (!statusRes.ok) throw new Error("Status fetch error");
 
         const statusData = await statusRes.json();
@@ -1189,6 +1201,11 @@ function triggerToastNotification(title, desc) {
     }
 
     setTimeout(closeToast, 6000);
+}
+
+// Close toast function to dismiss notifications
+function closeToast() {
+    toast.classList.remove("open");
 }
 
 // Reset Dashboard
