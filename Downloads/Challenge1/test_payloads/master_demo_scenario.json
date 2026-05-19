@@ -1,0 +1,9 @@
+{
+  "title": "BREAKING: Government announces 15% emergency regulatory duty on imported electronic components effective midnight",
+  "source": "manual_test",
+  "affected_materials": ["Lithium Battery", "PCB Board", "Microcontrollers"],
+  "severity": "CRITICAL",
+  "duty_increase_pct": 15,
+  "effective_date": "2026-05-19T00:00:00Z",
+  "raw_text": "Federal government has announced emergency 15% regulatory duty on all imported electronic components. The duty is effective starting midnight tonight. This affects manufacturers of electric vehicles, motorcycles, and consumer electronics."
+}

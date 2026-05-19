@@ -1,0 +1,1216 @@
+================================================================================
+         CHAINGAURD AI — MASTER ANTIGRAVITY IMPLEMENTATION PROMPT FILE
+         Complete Step-by-Step Execution Guide for Google Antigravity
+         Version 1.0 | 2025 | GCP + Google Antigravity Framework
+================================================================================
+
+INSTRUCTIONS FOR USE:
+---------------------
+This file contains ALL prompts to feed into Google Antigravity in SEQUENCE.
+Each PHASE is a separate Antigravity session or a major checkpoint.
+Each STEP inside a phase is a distinct prompt you send to Antigravity.
+Antigravity will automatically IMPLEMENT, TEST, and VERIFY each step.
+Do NOT skip steps. Each step's output is required by the next step.
+Where you see [REPLACE: ...] — replace with your actual values before sending.
+
+================================================================================
+PRE-FLIGHT CHECKLIST (Do This Before Starting Any Prompt)
+================================================================================
+
+Before sending PHASE 1 Prompt 1, manually verify:
+
+[ ] 1. GCP Project created at console.cloud.google.com
+        Project ID: [REPLACE: your-project-id] (e.g., chaingaurd-prod-2025)
+        Billing account linked and active
+
+[ ] 2. Google Cloud Shell opened (shell.cloud.google.com)
+        Or gcloud CLI installed locally (gcloud --version should return 450+)
+
+[ ] 3. gcloud authenticated:
+        Run: gcloud auth login
+        Run: gcloud config set project [REPLACE: your-project-id]
+
+[ ] 4. NewsAPI.org account created at newsapi.org
+        Free developer key obtained (copy it, needed in Phase 2)
+
+[ ] 5. Firebase project created at console.firebase.google.com
+        Realtime Database enabled (set to "Start in test mode" for demo)
+        Firebase config object copied from Project Settings > Your Apps
+
+[ ] 6. Google Antigravity enabled on your GCP project
+        Check: gcloud services list | grep antigravity
+        If not listed: contact your GCP account manager for access
+
+================================================================================
+PHASE 1 — GCP INFRASTRUCTURE BOOTSTRAP
+Antigravity Role: Infrastructure Provisioner
+Expected Duration: ~15 minutes
+================================================================================
+
+------------------------------------------------------------------------
+PHASE 1 | PROMPT 1 — Enable All Required GCP APIs
+------------------------------------------------------------------------
+
+Send this EXACT text to Google Antigravity:
+
+"""
+You are the infrastructure provisioner for ChainGaurd AI, an autonomous
+supply chain intelligence platform on Google Cloud Platform.
+
+PROJECT_ID = [REPLACE: your-project-id]
+REGION_PRIMARY = asia-south1
+REGION_ANTIGRAVITY = us-central1
+
+TASK: Enable all required GCP APIs for this project. Execute the following
+gcloud commands IN SEQUENCE. After each command, verify it returns SUCCESS.
+If any command fails, diagnose the error and retry with correct parameters.
+
+COMMANDS TO EXECUTE:
+1. gcloud services enable cloudfunctions.googleapis.com --project=PROJECT_ID
+2. gcloud services enable run.googleapis.com --project=PROJECT_ID
+3. gcloud services enable sql-component.googleapis.com --project=PROJECT_ID
+4. gcloud services enable sqladmin.googleapis.com --project=PROJECT_ID
+5. gcloud services enable storage.googleapis.com --project=PROJECT_ID
+6. gcloud services enable firestore.googleapis.com --project=PROJECT_ID
+7. gcloud services enable pubsub.googleapis.com --project=PROJECT_ID
+8. gcloud services enable secretmanager.googleapis.com --project=PROJECT_ID
+9. gcloud services enable aiplatform.googleapis.com --project=PROJECT_ID
+10. gcloud services enable cloudbuild.googleapis.com --project=PROJECT_ID
+11. gcloud services enable artifactregistry.googleapis.com --project=PROJECT_ID
+12. gcloud services enable cloudscheduler.googleapis.com --project=PROJECT_ID
+13. gcloud services enable vision.googleapis.com --project=PROJECT_ID
+14. gcloud services enable antigravity.googleapis.com --project=PROJECT_ID
+
+VERIFICATION: After all commands, run:
+  gcloud services list --enabled --filter="name:googleapis.com" --project=PROJECT_ID
+Confirm all 14 services appear in the enabled list.
+
+OUTPUT REQUIRED: A JSON summary with format:
+{
+  "phase": "1",
+  "step": "1",
+  "status": "SUCCESS" | "PARTIAL" | "FAILED",
+  "enabled_services": [...list of confirmed enabled services...],
+  "failed_services": [...list of any that failed with error reason...],
+  "next_step": "Create Service Account"
+}
+"""
+
+WAIT FOR: {"status": "SUCCESS"} before proceeding to Prompt 2.
+
+------------------------------------------------------------------------
+PHASE 1 | PROMPT 2 — Create Service Account & IAM Roles
+------------------------------------------------------------------------
+
+"""
+CONTEXT: GCP APIs are now enabled for PROJECT_ID=[REPLACE: your-project-id].
+
+TASK: Create the ChainGaurd AI service account and assign all required
+IAM roles. Execute these commands in sequence, verifying each succeeds.
+
+STEP A — Create service account:
+  gcloud iam service-accounts create chaingaurd-orchestrator \
+    --display-name="ChainGaurd AI Orchestrator SA" \
+    --project=[REPLACE: your-project-id]
+
+STEP B — Assign IAM roles (run each line separately):
+  ROLES=(
+    "roles/run.invoker"
+    "roles/cloudfunctions.invoker"
+    "roles/datastore.user"
+    "roles/storage.objectAdmin"
+    "roles/cloudsql.client"
+    "roles/pubsub.publisher"
+    "roles/pubsub.subscriber"
+    "roles/secretmanager.secretAccessor"
+    "roles/aiplatform.user"
+    "roles/logging.logWriter"
+    "roles/firebase.admin"
+  )
+  For each role, run:
+  gcloud projects add-iam-policy-binding [REPLACE: your-project-id] \
+    --member="serviceAccount:chaingaurd-orchestrator@[REPLACE: your-project-id].iam.gserviceaccount.com" \
+    --role=ROLE_NAME
+
+STEP C — Create and download service account key:
+  gcloud iam service-accounts keys create ./chaingaurd-sa-key.json \
+    --iam-account=chaingaurd-orchestrator@[REPLACE: your-project-id].iam.gserviceaccount.com
+
+STEP D — Verify all roles assigned:
+  gcloud projects get-iam-policy [REPLACE: your-project-id] \
+    --flatten="bindings[].members" \
+    --filter="bindings.members:chaingaurd-orchestrator" \
+    --format="table(bindings.role)"
+
+OUTPUT REQUIRED:
+{
+  "phase": "1",
+  "step": "2",
+  "service_account": "chaingaurd-orchestrator@[PROJECT_ID].iam.gserviceaccount.com",
+  "roles_assigned": [...],
+  "key_file_created": "chaingaurd-sa-key.json",
+  "status": "SUCCESS"
+}
+"""
+
+------------------------------------------------------------------------
+PHASE 1 | PROMPT 3 — Create GCS Buckets & Pub/Sub Infrastructure
+------------------------------------------------------------------------
+
+"""
+CONTEXT: Service account chaingaurd-orchestrator exists and has IAM roles.
+PROJECT_ID=[REPLACE: your-project-id], REGION=asia-south1
+
+TASK: Create all storage and messaging infrastructure.
+
+STEP A — Create GCS Buckets:
+  gsutil mb -l asia-south1 -p [REPLACE: your-project-id] gs://chaingaurd-raw-data
+  gsutil mb -l asia-south1 -p [REPLACE: your-project-id] gs://chaingaurd-contracts
+  gsutil mb -l asia-south1 -p [REPLACE: your-project-id] gs://chaingaurd-artifacts
+
+  Set lifecycle policy on raw-data bucket (delete after 30 days):
+  Create file lifecycle.json:
+  {
+    "rule": [{
+      "action": {"type": "Delete"},
+      "condition": {"age": 30}
+    }]
+  }
+  Run: gsutil lifecycle set lifecycle.json gs://chaingaurd-raw-data
+
+STEP B — Create Pub/Sub Topic and Subscriptions:
+  gcloud pubsub topics create chaingaurd-incident-detected \
+    --project=[REPLACE: your-project-id]
+
+  gcloud pubsub topics create chaingaurd-agent-results \
+    --project=[REPLACE: your-project-id]
+
+  gcloud pubsub subscriptions create chaingaurd-orchestrator-sub \
+    --topic=chaingaurd-incident-detected \
+    --push-endpoint=https://PLACEHOLDER_URL/v1/incident/process \
+    --push-auth-service-account=chaingaurd-orchestrator@[REPLACE: your-project-id].iam.gserviceaccount.com \
+    --project=[REPLACE: your-project-id]
+  (NOTE: Update push-endpoint URL after Cloud Run is deployed in Phase 4)
+
+STEP C — Initialize Firestore in Native mode:
+  gcloud firestore databases create --region=asia-south1 \
+    --project=[REPLACE: your-project-id]
+
+STEP D — Create Artifact Registry repository for Docker images:
+  gcloud artifacts repositories create chaingaurd-images \
+    --repository-format=docker \
+    --location=asia-south1 \
+    --description="ChainGaurd AI Docker Images" \
+    --project=[REPLACE: your-project-id]
+
+VERIFICATION: List all created resources and confirm existence.
+
+OUTPUT REQUIRED:
+{
+  "phase": "1",
+  "step": "3",
+  "gcs_buckets": ["chaingaurd-raw-data", "chaingaurd-contracts", "chaingaurd-artifacts"],
+  "pubsub_topics": ["chaingaurd-incident-detected", "chaingaurd-agent-results"],
+  "firestore": "initialized",
+  "artifact_registry": "chaingaurd-images",
+  "status": "SUCCESS"
+}
+"""
+
+------------------------------------------------------------------------
+PHASE 1 | PROMPT 4 — Cloud SQL Database Setup
+------------------------------------------------------------------------
+
+"""
+CONTEXT: GCS buckets and Pub/Sub created. Now setting up PostgreSQL database.
+PROJECT_ID=[REPLACE: your-project-id]
+
+TASK: Create and configure Cloud SQL PostgreSQL instance with schema.
+
+STEP A — Create Cloud SQL instance:
+  gcloud sql instances create chaingaurd-db \
+    --database-version=POSTGRES_15 \
+    --tier=db-g1-small \
+    --region=asia-south1 \
+    --storage-type=SSD \
+    --storage-size=20GB \
+    --backup-start-time=03:00 \
+    --project=[REPLACE: your-project-id]
+
+STEP B — Create database and user:
+  gcloud sql databases create chaingaurd --instance=chaingaurd-db
+  
+  Generate secure password (save this for Secret Manager):
+  STRONG_PASSWORD=$(openssl rand -base64 32)
+  echo "DB Password: $STRONG_PASSWORD" (SAVE THIS)
+  
+  gcloud sql users create chaingaurd_app \
+    --instance=chaingaurd-db \
+    --password=$STRONG_PASSWORD
+
+STEP C — Get connection name:
+  gcloud sql instances describe chaingaurd-db \
+    --format="value(connectionName)"
+  (Save the output: it looks like PROJECT:REGION:chaingaurd-db)
+
+STEP D — Create the database schema (connect via Cloud SQL Auth Proxy):
+  Execute these SQL statements:
+
+  CREATE TABLE suppliers (
+    id            SERIAL PRIMARY KEY,
+    name          VARCHAR(200) NOT NULL,
+    city          VARCHAR(100) NOT NULL,
+    country       VARCHAR(100) DEFAULT 'Pakistan',
+    materials     TEXT[],
+    price_index   DECIMAL(5,2),
+    delivery_days INTEGER,
+    quality_score DECIMAL(3,2),
+    api_endpoint  VARCHAR(500),
+    active        BOOLEAN DEFAULT TRUE,
+    created_at    TIMESTAMPTZ DEFAULT NOW()
+  );
+
+  CREATE TABLE incidents (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    source              VARCHAR(100),
+    title               TEXT,
+    raw_text            TEXT,
+    risk_score          DECIMAL(5,2),
+    risk_pkr            BIGINT,
+    status              VARCHAR(50) DEFAULT 'detected',
+    antigravity_run_id  VARCHAR(200),
+    detected_at         TIMESTAMPTZ DEFAULT NOW(),
+    mitigated_at        TIMESTAMPTZ
+  );
+
+  CREATE TABLE agent_actions (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    incident_id UUID REFERENCES incidents(id),
+    agent_type  VARCHAR(50),
+    action_name VARCHAR(100),
+    input_json  JSONB,
+    output_json JSONB,
+    status      VARCHAR(50),
+    confidence  DECIMAL(4,3),
+    savings_pkr BIGINT,
+    executed_at TIMESTAMPTZ DEFAULT NOW()
+  );
+
+STEP E — Seed supplier data:
+  INSERT INTO suppliers (name, city, materials, price_index, delivery_days, quality_score, api_endpoint) VALUES
+  ('Karachi Electronics Hub', 'Karachi', ARRAY['Lithium Battery','PCB Board','Capacitors'], 0.95, 1, 0.88, 'https://mock-procurement.PLACEHOLDER/api/v1/purchase-orders'),
+  ('Gujranwala Parts Market', 'Gujranwala', ARRAY['Steel','Aluminum','Copper Wire'], 0.90, 2, 0.82, 'https://mock-procurement.PLACEHOLDER/api/v1/purchase-orders'),
+  ('Lahore Industrial Zone', 'Lahore', ARRAY['Lithium Battery','Electric Motors'], 1.05, 3, 0.91, 'https://mock-procurement.PLACEHOLDER/api/v1/purchase-orders'),
+  ('Sialkot Tech Suppliers', 'Sialkot', ARRAY['Steel','Fasteners','Housing Units'], 0.88, 2, 0.85, 'https://mock-procurement.PLACEHOLDER/api/v1/purchase-orders'),
+  ('Islamabad Component Store', 'Islamabad', ARRAY['PCB Board','Microcontrollers','Sensors'], 1.10, 4, 0.93, 'https://mock-procurement.PLACEHOLDER/api/v1/purchase-orders');
+
+OUTPUT REQUIRED:
+{
+  "phase": "1",
+  "step": "4",
+  "db_instance": "chaingaurd-db",
+  "connection_name": "PROJECT:asia-south1:chaingaurd-db",
+  "tables_created": ["suppliers", "incidents", "agent_actions"],
+  "seed_rows": 5,
+  "status": "SUCCESS"
+}
+"""
+
+================================================================================
+PHASE 2 — SECRET MANAGER SETUP
+Antigravity Role: Secrets Configurator
+Expected Duration: ~10 minutes
+================================================================================
+
+------------------------------------------------------------------------
+PHASE 2 | PROMPT 5 — Store All Secrets in Secret Manager
+------------------------------------------------------------------------
+
+"""
+CONTEXT: Infrastructure created. Now storing all credentials securely.
+PROJECT_ID=[REPLACE: your-project-id]
+
+YOU NEED THESE VALUES READY (gather before executing):
+  NEWS_API_KEY = [REPLACE: your newsapi.org key]
+  DB_PASSWORD = [REPLACE: password from Phase 1 Step 4]
+  DB_CONNECTION = [REPLACE: connection name from Phase 1 Step 4]
+  FIREBASE_RTDB_URL = [REPLACE: https://your-project-default-rtdb.firebaseio.com]
+
+TASK: Create all Secret Manager secrets with correct values.
+
+STEP A — Create each secret:
+
+  echo -n "[REPLACE: NEWS_API_KEY_VALUE]" | \
+    gcloud secrets create NEWS_API_KEY --data-file=- --project=[PROJECT_ID]
+
+  echo -n "[REPLACE: DB_PASSWORD_VALUE]" | \
+    gcloud secrets create CLOUD_SQL_PASSWORD --data-file=- --project=[PROJECT_ID]
+
+  echo -n "[REPLACE: DB_CONNECTION_VALUE]" | \
+    gcloud secrets create CLOUD_SQL_CONNECTION --data-file=- --project=[PROJECT_ID]
+
+  echo -n "[REPLACE: FIREBASE_RTDB_URL_VALUE]" | \
+    gcloud secrets create FIREBASE_RTDB_URL --data-file=- --project=[PROJECT_ID]
+
+  echo -n "chaingaurd-demo-token-procurement" | \
+    gcloud secrets create MOCK_PROCUREMENT_TOKEN --data-file=- --project=[PROJECT_ID]
+
+  echo -n "chaingaurd-demo-token-legal" | \
+    gcloud secrets create MOCK_LEGAL_API_TOKEN --data-file=- --project=[PROJECT_ID]
+
+  echo -n "chaingaurd-demo-token-fintech" | \
+    gcloud secrets create MOCK_FINTECH_API_TOKEN --data-file=- --project=[PROJECT_ID]
+
+  cat ./chaingaurd-sa-key.json | \
+    gcloud secrets create ANTIGRAVITY_SA_KEY --data-file=- --project=[PROJECT_ID]
+
+STEP B — Store app config secrets:
+  echo -n "antigravity-pro-001" | gcloud secrets create ANTIGRAVITY_MODEL --data-file=- --project=[PROJECT_ID]
+  echo -n "0.85" | gcloud secrets create HITL_CONFIDENCE_THRESHOLD --data-file=- --project=[PROJECT_ID]
+  echo -n "500000" | gcloud secrets create RISK_ALERT_THRESHOLD_PKR --data-file=- --project=[PROJECT_ID]
+  echo -n "15" | gcloud secrets create ANTIGRAVITY_MAX_STEPS --data-file=- --project=[PROJECT_ID]
+
+STEP C — Verify all secrets created:
+  gcloud secrets list --project=[PROJECT_ID]
+
+STEP D — Grant service account access to all secrets:
+  for SECRET in NEWS_API_KEY CLOUD_SQL_PASSWORD CLOUD_SQL_CONNECTION FIREBASE_RTDB_URL \
+    MOCK_PROCUREMENT_TOKEN MOCK_LEGAL_API_TOKEN MOCK_FINTECH_API_TOKEN ANTIGRAVITY_SA_KEY \
+    ANTIGRAVITY_MODEL HITL_CONFIDENCE_THRESHOLD RISK_ALERT_THRESHOLD_PKR ANTIGRAVITY_MAX_STEPS; do
+    gcloud secrets add-iam-policy-binding $SECRET \
+      --member="serviceAccount:chaingaurd-orchestrator@[PROJECT_ID].iam.gserviceaccount.com" \
+      --role="roles/secretmanager.secretAccessor" \
+      --project=[PROJECT_ID]
+  done
+
+OUTPUT REQUIRED:
+{
+  "phase": "2",
+  "step": "5",
+  "secrets_created": 12,
+  "secrets_list": ["NEWS_API_KEY","CLOUD_SQL_PASSWORD","CLOUD_SQL_CONNECTION","FIREBASE_RTDB_URL","MOCK_PROCUREMENT_TOKEN","MOCK_LEGAL_API_TOKEN","MOCK_FINTECH_API_TOKEN","ANTIGRAVITY_SA_KEY","ANTIGRAVITY_MODEL","HITL_CONFIDENCE_THRESHOLD","RISK_ALERT_THRESHOLD_PKR","ANTIGRAVITY_MAX_STEPS"],
+  "sa_access_granted": true,
+  "status": "SUCCESS"
+}
+"""
+
+================================================================================
+PHASE 3 — CLOUD FUNCTIONS (INGESTION LAYER)
+Antigravity Role: Code Generator & Deployer
+Expected Duration: ~20 minutes
+================================================================================
+
+------------------------------------------------------------------------
+PHASE 3 | PROMPT 6 — Generate & Deploy News Scraper Cloud Function
+------------------------------------------------------------------------
+
+"""
+CONTEXT: All secrets are stored. Now building the data ingestion layer.
+PROJECT_ID=[REPLACE: your-project-id]
+
+TASK: Generate the complete Python code for the news scraper Cloud Function
+AND deploy it to GCP Cloud Functions Gen 2. The function must:
+
+1. Be triggered by Cloud Scheduler every 5 minutes (HTTP trigger)
+2. Read NEWS_API_KEY from Secret Manager (NOT hardcoded)
+3. Call NewsAPI.org with these keywords: "supply chain Pakistan", "port disruption", 
+   "import duty Pakistan", "raw material shortage", "shipping disruption Asia",
+   "FBR regulatory duty", "Karachi port", "customs duty electronic components"
+4. Filter articles published in last 6 hours only
+5. For each article, compute a basic risk_score (0.0-1.0) using keyword matching:
+   HIGH_RISK_KEYWORDS = ["duty", "ban", "disruption", "closure", "shortage", "hack", "fire", "strike"]
+   MEDIUM_RISK_KEYWORDS = ["delay", "slow", "congestion", "warning", "concern"]
+6. Store raw JSON to GCS: gs://chaingaurd-raw-data/incidents/YYYY-MM-DD/HH-MM-SS_news.json
+7. If any article has risk_score > 0.5, publish a Pub/Sub message to topic 
+   chaingaurd-incident-detected with this payload:
+   {
+     "incident_id": "uuid",
+     "source": "news",
+     "title": article.title,
+     "url": article.url,
+     "risk_score": float,
+     "raw_text": article.description + article.content,
+     "detected_at": ISO timestamp,
+     "gcs_path": "gs://chaingaurd-raw-data/incidents/..."
+   }
+8. Return HTTP 200 with count of articles processed and incidents published
+
+GENERATE: Complete main.py and requirements.txt for this function.
+DEPLOY: Using gcloud functions deploy news-scraper with correct parameters.
+TEST: Invoke the function manually once and verify it returns HTTP 200.
+VERIFY: Check GCS bucket for stored JSON and Pub/Sub for published messages.
+
+After deployment, output:
+{
+  "phase": "3",
+  "step": "6",
+  "function_name": "news-scraper",
+  "function_url": "https://...",
+  "test_result": {"status": 200, "articles_processed": N, "incidents_published": N},
+  "gcs_file_created": "gs://chaingaurd-raw-data/incidents/...",
+  "status": "SUCCESS"
+}
+"""
+
+------------------------------------------------------------------------
+PHASE 3 | PROMPT 7 — Generate & Deploy Port Feed & Policy Parser Functions
+------------------------------------------------------------------------
+
+"""
+CONTEXT: News scraper deployed and working.
+
+TASK A: Generate and deploy the Port Congestion Scraper Cloud Function.
+This function simulates a Geospatial Port API feed. It must:
+1. Generate mock JSON data for 3 ports: Karachi, Gwadar, Shanghai
+2. Each port entry: {port_name, lat, lng, congestion_level (0-10), 
+   turnaround_time_hours, ships_waiting, status: "NORMAL"|"CONGESTED"|"CLOSED"}
+3. Randomly vary values to simulate real-world fluctuation
+4. Store to GCS: gs://chaingaurd-raw-data/ports/TIMESTAMP_ports.json
+5. If any port has congestion_level > 7 OR status = "CLOSED", publish Pub/Sub incident
+6. HTTP trigger, deploy to asia-south1
+
+TASK B: Generate and deploy the Policy Document Parser Cloud Function.
+This function must:
+1. Accept HTTP POST with multipart/form-data containing PDF or image file
+2. Use Google Vision API (OCR) to extract text from the uploaded document
+3. Use keyword extraction to identify: duty rates, effective dates, 
+   affected materials, regulatory body, circular number
+4. Store extracted structured JSON to GCS: gs://chaingaurd-contracts/policies/TIMESTAMP.json
+5. Return structured JSON response with extracted fields
+6. If extracted text contains duty increase > 5%, auto-publish Pub/Sub incident
+
+DEPLOY both functions, test each with sample inputs, verify outputs.
+
+OUTPUT REQUIRED:
+{
+  "phase": "3",
+  "step": "7",
+  "port_scraper_url": "https://...",
+  "policy_parser_url": "https://...",
+  "port_test_result": {"congestion_data_points": 3, "pubsub_published": true/false},
+  "policy_test_result": {"text_extracted": true, "fields_identified": [...]},
+  "status": "SUCCESS"
+}
+"""
+
+------------------------------------------------------------------------
+PHASE 3 | PROMPT 8 — Create Cloud Scheduler Jobs for All CRON Functions
+------------------------------------------------------------------------
+
+"""
+CONTEXT: All 3 Cloud Functions deployed with their HTTP trigger URLs.
+Function URLs collected from Phase 3 outputs.
+
+TASK: Create Cloud Scheduler jobs to trigger each function automatically.
+
+SCHEDULER JOB 1 — News Scraper (every 5 minutes):
+  gcloud scheduler jobs create http chaingaurd-news-scraper-cron \
+    --location=asia-south1 \
+    --schedule="*/5 * * * *" \
+    --uri=[REPLACE: news-scraper function URL] \
+    --http-method=GET \
+    --oidc-service-account-email=chaingaurd-orchestrator@[PROJECT_ID].iam.gserviceaccount.com \
+    --oidc-token-audience=[REPLACE: news-scraper function URL] \
+    --project=[PROJECT_ID]
+
+SCHEDULER JOB 2 — Port Feed (every 10 minutes):
+  gcloud scheduler jobs create http chaingaurd-port-feed-cron \
+    --location=asia-south1 \
+    --schedule="*/10 * * * *" \
+    --uri=[REPLACE: port-scraper function URL] \
+    --http-method=GET \
+    --oidc-service-account-email=chaingaurd-orchestrator@[PROJECT_ID].iam.gserviceaccount.com \
+    --project=[PROJECT_ID]
+
+TEST: Manually trigger each scheduler job once:
+  gcloud scheduler jobs run chaingaurd-news-scraper-cron --location=asia-south1
+  gcloud scheduler jobs run chaingaurd-port-feed-cron --location=asia-south1
+
+VERIFY: Check Cloud Logging for successful function executions.
+
+OUTPUT REQUIRED:
+{
+  "phase": "3",
+  "step": "8",
+  "scheduler_jobs": ["chaingaurd-news-scraper-cron", "chaingaurd-port-feed-cron"],
+  "manual_trigger_results": {"news": "SUCCESS", "port": "SUCCESS"},
+  "status": "SUCCESS"
+}
+"""
+
+================================================================================
+PHASE 4 — MOCK ACTION APIs (Cloud Run Services)
+Antigravity Role: API Builder & Deployer
+Expected Duration: ~25 minutes
+================================================================================
+
+------------------------------------------------------------------------
+PHASE 4 | PROMPT 9 — Build & Deploy Mock Procurement API
+------------------------------------------------------------------------
+
+"""
+CONTEXT: Ingestion layer complete. Now building mock action API services.
+PROJECT_ID=[REPLACE: your-project-id]
+
+TASK: Generate complete Python FastAPI application for Mock Procurement API,
+containerize it, and deploy to Cloud Run.
+
+The API must implement these exact endpoints:
+
+GET /health
+  Returns: {"status": "healthy", "service": "mock-procurement-api"}
+
+GET /api/v1/suppliers
+  Query params: material (string), city (optional string), max_days (optional int)
+  Logic: Query Cloud SQL suppliers table with filters
+  Returns: [{id, name, city, materials, price_index, delivery_days, quality_score}]
+  Auth: Bearer token from MOCK_PROCUREMENT_TOKEN secret
+
+POST /api/v1/purchase-orders
+  Body: {supplier_id: int, material: string, quantity: int, urgency: "NORMAL"|"URGENT"|"CRITICAL"}
+  Logic: Generate mock PO with realistic data. Store in Firestore collection "purchase_orders".
+  Returns: {po_id: uuid, supplier_name, estimated_delivery, total_cost_pkr, status: "CONFIRMED"}
+  Auth: Bearer token
+
+GET /api/v1/purchase-orders/{po_id}
+  Logic: Retrieve from Firestore
+  Returns: Full PO object with status updates
+
+IMPLEMENTATION REQUIREMENTS:
+- Use FastAPI + uvicorn
+- Read all secrets from Secret Manager (not env vars)
+- Connect to Cloud SQL via Cloud SQL Connector library
+- Store/retrieve from Firestore
+- Add request logging to Cloud Logging
+- Bearer token validated against MOCK_PROCUREMENT_TOKEN secret
+- Return proper HTTP status codes (200, 400, 401, 404, 500)
+- Include CORS headers for mobile app
+
+GENERATE: Complete app.py, requirements.txt, Dockerfile
+BUILD: gcloud builds submit for Docker image
+DEPLOY: gcloud run deploy mock-procurement-api
+TEST: Hit each endpoint with curl commands and verify responses
+STORE: Save service URL to Secret Manager as MOCK_PROCUREMENT_BASE_URL
+
+OUTPUT REQUIRED:
+{
+  "phase": "4",
+  "step": "9",
+  "service_url": "https://mock-procurement-api-HASH-as.a.run.app",
+  "endpoints_tested": {
+    "GET /health": 200,
+    "GET /api/v1/suppliers?material=Lithium Battery": 200,
+    "POST /api/v1/purchase-orders": 200,
+    "GET /api/v1/purchase-orders/{id}": 200
+  },
+  "status": "SUCCESS"
+}
+"""
+
+------------------------------------------------------------------------
+PHASE 4 | PROMPT 10 — Build & Deploy Mock Legal API
+------------------------------------------------------------------------
+
+"""
+CONTEXT: Mock Procurement API deployed at [REPLACE: procurement URL].
+
+TASK: Generate complete Python FastAPI application for Mock Legal-Tech API,
+containerize, and deploy to Cloud Run.
+
+Implement these exact endpoints:
+
+GET /health
+  Returns: {"status": "healthy", "service": "mock-legal-api"}
+
+POST /api/v1/contracts/analyze
+  Body: {contract_text: string, incident_title: string, incident_date: string}
+  Logic: Use string matching to extract these clause types from contract_text:
+    - force_majeure: Find text containing "force majeure", "act of god", "unforeseen"
+    - liquidated_damages: Find text with "penalty", "liquidated damages", "per day"
+    - delivery_extension: Find text with "delivery", "timeline", "extension"
+    - arbitration: Find text with "arbitration", "dispute resolution"
+  Returns: {
+    contract_analyzed: true,
+    clauses_found: {force_majeure: "extracted text...", liquidated_damages: "..."},
+    risk_level: "HIGH"|"MEDIUM"|"LOW",
+    recommended_action: "ADDENDUM_REQUIRED"|"NOTIFICATION_ONLY"|"NO_ACTION"
+  }
+
+POST /api/v1/contracts/addendum
+  Body: {contract_id: string, incident_ref: string, delay_days: int, force_majeure_clause: string}
+  Logic: Generate a realistic Force Majeure addendum document as text.
+  The addendum must include: incident reference, date, affected party details, 
+  new delivery timeline, legal basis, and signature blocks.
+  Store generated addendum to GCS: gs://chaingaurd-contracts/addendums/{uuid}.txt
+  Returns: {addendum_id: uuid, addendum_text: "...", gcs_url: "gs://...", status: "DRAFT_CREATED"}
+
+POST /api/v1/contracts/push-approval
+  Body: {addendum_id: string, client_email: string}
+  Logic: Store approval request in Firestore collection "approval_requests"
+  Simulate sending email notification (log the action, don't actually send)
+  Returns: {approval_request_id: uuid, status: "PENDING_APPROVAL", 
+            estimated_response_hours: 24, mock_client_portal_url: "https://mock-portal/approve/UUID"}
+
+DEPLOY, TEST all endpoints, store service URL to Secret Manager as MOCK_LEGAL_BASE_URL
+
+OUTPUT REQUIRED:
+{
+  "phase": "4",
+  "step": "10",
+  "service_url": "https://mock-legal-api-HASH-as.a.run.app",
+  "endpoints_tested": {...all endpoints with status codes...},
+  "sample_addendum_preview": "first 200 chars of generated addendum...",
+  "status": "SUCCESS"
+}
+"""
+
+------------------------------------------------------------------------
+PHASE 4 | PROMPT 11 — Build & Deploy Mock FinTech API
+------------------------------------------------------------------------
+
+"""
+CONTEXT: Legal API deployed. Now building FinTech hedging mock service.
+
+TASK: Generate Python FastAPI Mock FinTech API for commodity hedging and FX.
+
+Implement these endpoints:
+
+GET /health
+
+GET /api/v1/commodities/price/{asset}
+  Logic: Return mock price data for: LITHIUM, STEEL, COPPER, ALUMINUM, CRUDE_OIL
+  Include: {asset, price_usd, price_pkr, 24h_change_pct, 7d_change_pct, trend: "UP"|"DOWN"|"STABLE"}
+  Add ±5% random variation to simulate live prices
+
+POST /api/v1/trades/hedge
+  Body: {asset: string, direction: "LONG"|"SHORT", quantity: float, trigger_price: float, risk_reason: string}
+  Logic: Simulate trade placement. Calculate:
+    - potential_profit = quantity * abs(current_price - trigger_price) * 0.3 (mock estimate)
+    - Store in Firestore collection "hedge_trades"
+  Returns: {order_id: uuid, asset, direction, quantity, entry_price, 
+            estimated_savings_pkr: int, status: "FILLED", execution_time_ms: random 50-200}
+
+GET /api/v1/trades/{order_id}
+
+POST /api/v1/fx/forward-cover
+  Body: {amount_usd: float, delivery_date: string, reason: string}
+  Logic: Mock forward contract. Rate = current_rate * (1 + small premium 0.3-0.8%)
+  Returns: {contract_id: uuid, amount_usd, forward_rate_pkr, 
+            settlement_date, protection_value_pkr: int, status: "CONTRACT_PLACED"}
+
+GET /api/v1/fx/rates
+  Returns current mock USD/PKR, EUR/PKR, CNY/PKR rates with 24h change
+
+DEPLOY, TEST, store URL as MOCK_FINTECH_BASE_URL in Secret Manager.
+
+OUTPUT: Same format as previous API steps with all endpoint test results.
+"""
+
+================================================================================
+PHASE 5 — ANTIGRAVITY ORCHESTRATOR (THE BRAIN)
+Antigravity Role: Core AI System Builder
+Expected Duration: ~35 minutes (most complex phase)
+================================================================================
+
+------------------------------------------------------------------------
+PHASE 5 | PROMPT 12 — Generate Complete Antigravity Orchestrator Service
+------------------------------------------------------------------------
+
+"""
+CONTEXT: All mock APIs deployed. Infrastructure ready.
+URLs available in Secret Manager: MOCK_PROCUREMENT_BASE_URL, MOCK_LEGAL_BASE_URL, MOCK_FINTECH_BASE_URL
+PROJECT_ID=[REPLACE: your-project-id]
+
+TASK: Generate the COMPLETE Google Antigravity-powered orchestrator service.
+This is the core AI brain. It must be a Cloud Run service (Python FastAPI).
+
+SYSTEM ARCHITECTURE:
+The orchestrator receives incident JSON from Pub/Sub push subscription.
+It then runs a full Google Antigravity ReAct loop with these tools:
+
+TOOL DEFINITIONS (implement as Python functions decorated for Antigravity):
+
+1. get_port_status(port_name: str) -> dict
+   Reads latest port data from GCS gs://chaingaurd-raw-data/ports/latest.json
+   Returns congestion level and status for requested port
+
+2. query_inventory(material: str) -> dict
+   Queries Cloud SQL: returns current stock level and days_remaining for material
+   (Add inventory table to DB with seed data if not exists)
+
+3. search_suppliers(material: str, city: str = None, max_days: int = 5) -> list
+   Calls GET /api/v1/suppliers on Mock Procurement API
+   Returns filtered, ranked supplier list
+
+4. create_purchase_order(supplier_id: int, material: str, quantity: int, urgency: str) -> dict
+   Calls POST /api/v1/purchase-orders
+   Returns PO confirmation
+
+5. analyze_contract(contract_id: str, incident_title: str) -> dict
+   Fetches contract text from GCS gs://chaingaurd-contracts/{contract_id}.txt
+   Calls POST /api/v1/contracts/analyze
+   Returns clause analysis
+
+6. generate_addendum(contract_id: str, incident_ref: str, delay_days: int) -> dict
+   Calls POST /api/v1/contracts/addendum
+   Returns addendum with GCS URL
+
+7. place_commodity_hedge(asset: str, direction: str, quantity: float) -> dict
+   Calls POST /api/v1/trades/hedge
+   Returns trade confirmation with savings estimate
+
+8. place_fx_forward(amount_usd: float, delivery_date: str) -> dict
+   Calls POST /api/v1/fx/forward-cover
+   Returns contract details
+
+9. compute_financial_impact(incident_data: dict, affected_materials: list) -> dict
+   Formula-based computation:
+   - Import cost increase = sum(material_qty * price_increase_pct * unit_cost)
+   - Production halt cost = idle_workers(200) * hourly_rate(PKR 150) * hours_at_risk
+   - Opportunity cost = daily_revenue(PKR 500000) * days_at_risk
+   - Total risk PKR = sum of above
+   Returns {total_risk_pkr, breakdown: {...}, risk_level: "LOW/MEDIUM/HIGH/CRITICAL"}
+
+10. save_incident_state(incident_id: str, state: dict) -> bool
+    Writes current state to Firestore document incidents/{incident_id}
+    Updates Firebase RTDB for mobile dashboard real-time sync
+
+11. send_hitl_alert(incident_id: str, action_description: str, confidence: float, options: list) -> dict
+    Creates HITL pending record in Firestore: hitl_pending/{incident_id}
+    Updates Firebase RTDB to trigger mobile push notification
+    Returns {hitl_id: uuid, status: "AWAITING_HUMAN_APPROVAL"}
+
+ANTIGRAVITY CONFIGURATION:
+- Model: antigravity-pro-001
+- System prompt: See SYSTEM PROMPT section below
+- Max steps: 15
+- Temperature: 0.1 (deterministic for business decisions)
+- All tool calls logged with Thought/Action/Observation format
+
+SYSTEM PROMPT FOR ANTIGRAVITY AGENT:
+"""
+You are ChainGaurd AI — an autonomous supply chain risk mitigation agent
+for Pakistani manufacturing enterprises.
+
+You have been activated because a supply chain incident has been detected.
+Your mission is to:
+1. Analyze the incident's full financial impact using compute_financial_impact
+2. Check current inventory levels for affected materials
+3. Simultaneously execute THREE mitigation strategies in sequence:
+   a. PROCUREMENT: Find backup suppliers and create purchase orders
+   b. LEGAL: Analyze affected contracts and generate Force Majeure addendums
+   c. FINTECH: Place commodity hedges or FX forward covers if financially justified
+
+RULES:
+- Always call compute_financial_impact FIRST before any action
+- Always check inventory before procurement actions
+- If confidence in any action < 0.85, call send_hitl_alert instead of proceeding
+- Always save state to Firestore after each major action
+- Log every Thought, Action, and Observation clearly
+- After all actions complete, output a FINAL_SUMMARY JSON with:
+  {total_risk_pkr, mitigated_pkr, net_risk_pkr, actions_taken: [...], 
+   hitl_required: bool, overall_status: "MITIGATED"|"PARTIAL"|"FAILED"}
+"""
+
+API ENDPOINTS FOR THE ORCHESTRATOR SERVICE:
+
+POST /v1/incident/process
+  Accepts: Pub/Sub push message OR direct JSON
+  Extracts incident data from message
+  Spawns Antigravity agent
+  Streams ReAct trace to Cloud Logging
+  Returns: {incident_id, antigravity_run_id, status: "PROCESSING"}
+
+GET /v1/incident/{incident_id}/status
+  Returns current Firestore state of incident
+
+GET /v1/incident/{incident_id}/trace
+  Returns full ReAct thought/action/observation log from Cloud Logging
+  Format: [{step, thought, action, action_input, observation, timestamp}]
+
+POST /v1/hitl/approve
+  Body: {hitl_id, approver_token, decision: "APPROVE"|"REJECT"}
+  Validates token against Firebase Auth
+  Updates Firestore: hitl_pending/{hitl_id}.status = "APPROVED"
+  Resumes paused Antigravity execution
+  Returns: {status: "RESUMED", next_action: "..."}
+
+POST /v1/hitl/reject
+  Same as approve but triggers fallback cascade
+
+GET /v1/health
+
+GENERATE: Complete orchestrator code with all tools and endpoints.
+BUILD & DEPLOY to Cloud Run.
+UPDATE: Pub/Sub subscription push endpoint to point to new service URL.
+TEST: Send a manual test incident and verify full ReAct loop executes.
+
+OUTPUT REQUIRED:
+{
+  "phase": "5",
+  "step": "12",
+  "orchestrator_url": "https://antigravity-orchestrator-HASH-as.a.run.app",
+  "pubsub_updated": true,
+  "test_incident_id": "uuid",
+  "test_trace": [
+    {"step": 1, "thought": "...", "action": "compute_financial_impact", "observation": "..."},
+    ...
+  ],
+  "final_summary": {
+    "total_risk_pkr": ...,
+    "mitigated_pkr": ...,
+    "net_risk_pkr": ...,
+    "actions_taken": [...],
+    "overall_status": "MITIGATED"
+  },
+  "status": "SUCCESS"
+}
+"""
+
+================================================================================
+PHASE 6 — MOBILE UI (CONTROL ROOM DASHBOARD)
+Antigravity Role: Frontend Builder
+Expected Duration: ~30 minutes
+================================================================================
+
+------------------------------------------------------------------------
+PHASE 6 | PROMPT 13 — Generate React Native Control Room App
+------------------------------------------------------------------------
+
+"""
+CONTEXT: Backend fully operational. Orchestrator URL: [REPLACE: orchestrator URL]
+Firebase RTDB URL: [REPLACE: firebase URL]
+
+TASK: Generate a complete React Native application — the ChainGaurd AI
+Control Room Dashboard. Dark-themed, enterprise-grade UI.
+
+SCREENS REQUIRED:
+
+SCREEN 1: Dashboard (Main)
+- Full-screen dark background (#0D1117)
+- Header: "CHAINGAURD AI" with live status dot (green/red pulsing)
+- SUPPLY CHAIN NODE MAP: SVG-based node graph showing:
+  * Nodes: Karachi Port, Gwadar Port, Shanghai Port, Lahore Factory, Raw Material Warehouse
+  * Connecting lines between nodes with flow animation (CSS animation)
+  * Node colors: GREEN (normal) = #00E676, RED (disrupted) = #FF1744
+  * On incident detection: affected node flashes and turns red
+  * Listen to Firebase RTDB path: /dashboard/nodes for real-time updates
+- FINANCIAL METRICS PANEL (bottom):
+  * Risk Exposed: PKR X,XXX,XXX (red)
+  * Mitigated: PKR X,XXX,XXX (green)
+  * Net Risk: PKR X,XXX,XXX (yellow)
+  * Live update from Firebase RTDB: /dashboard/metrics
+- RECENT INCIDENTS LIST: ScrollView with last 5 incidents, tap to open detail
+
+SCREEN 2: Incident Detail
+- Incident title, source, timestamp, risk level badge
+- TIMELINE: Vertical timeline showing agent actions:
+  10:01 AM - News Ingested (blue)
+  10:02 AM - Risk Computed: PKR 5.2M (orange)
+  10:03 AM - PO Sent to Karachi Vendor (green)
+  10:03 AM - Legal Addendum Generated (green)
+  10:04 AM - Hedge Order Placed (green)
+- ACTION CARDS: One card per agent action (Procurement/Legal/FinTech)
+  Each card shows: action type icon, description, savings amount, status badge
+- Fetch from: GET /v1/incident/{id}/status and /v1/incident/{id}/trace
+
+SCREEN 3: Antigravity Trace Log
+- Header: "ANTIGRAVITY ReAct Trace"
+- Scrollable list of ReAct steps in terminal-style display:
+  THOUGHT: [white text]
+  ACTION: [cyan text, bold]
+  INPUT: [grey text, monospace]
+  OBSERVATION: [green text]
+- Copy button to copy full trace
+- Fetch from: GET /v1/incident/{id}/trace
+
+SCREEN 4: HITL (Human-in-the-Loop) Alerts
+- Badge on tab bar showing count of pending approvals
+- Each pending action shown as card:
+  * AI Recommendation text
+  * Confidence percentage bar
+  * APPROVE button (green, full width)
+  * REJECT button (red, outlined)
+- On approve/reject: call POST /v1/hitl/approve or /v1/hitl/reject
+- Listen to Firebase RTDB: /hitl_pending for real-time alert count
+
+SCREEN 5: Settings
+- Orchestrator URL configuration
+- HITL confidence threshold slider
+- Risk threshold PKR input
+- Manual trigger button: "Simulate Test Incident"
+  (sends test JSON to POST /v1/incident/process)
+
+TECHNICAL REQUIREMENTS:
+- Use React Navigation (bottom tabs + stack navigator)
+- Firebase Realtime Database SDK for real-time updates
+- Axios for REST API calls
+- AsyncStorage for local config (ORCHESTRATOR_URL, auth token)
+- Push notifications via Firebase Cloud Messaging (FCM) for HITL alerts
+- react-native-svg for node graph
+- All colors defined in a theme.js constants file
+- Support iOS and Android
+
+GENERATE: Complete React Native project structure with all screens.
+Provide: app entry point, all screen components, navigation setup,
+Firebase config, API service class, and theme constants.
+
+OUTPUT REQUIRED:
+File structure listing of all generated files with brief description of each.
+"""
+
+================================================================================
+PHASE 7 — TESTING & VERIFICATION
+Antigravity Role: QA Engineer & Test Runner
+Expected Duration: ~20 minutes
+================================================================================
+
+------------------------------------------------------------------------
+PHASE 7 | PROMPT 14 — End-to-End Integration Test
+------------------------------------------------------------------------
+
+"""
+CONTEXT: All components deployed. Run the MASTER DEMO SCENARIO end-to-end.
+
+TASK: Execute the following test sequence and verify each step.
+
+TEST SCENARIO: "15% Regulatory Duty on Electronic Components"
+
+STEP 1 — Trigger test incident manually:
+  curl -X POST [REPLACE: ORCHESTRATOR_URL]/v1/incident/process \
+    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "title": "BREAKING: Government announces 15% emergency regulatory duty on imported electronic components effective midnight",
+      "source": "manual_test",
+      "affected_materials": ["Lithium Battery", "PCB Board", "Microcontrollers"],
+      "severity": "CRITICAL",
+      "duty_increase_pct": 15,
+      "effective_date": "2025-12-31T00:00:00Z",
+      "raw_text": "Federal government has announced emergency 15% regulatory duty on all imported electronic components. The duty is effective starting midnight tonight. This affects manufacturers of electric vehicles, motorcycles, and consumer electronics."
+    }'
+  
+  Expected: HTTP 200 with {incident_id: "UUID", status: "PROCESSING"}
+  Save incident_id for next steps.
+
+STEP 2 — Poll incident status every 10 seconds until status = "MITIGATED":
+  curl [ORCHESTRATOR_URL]/v1/incident/{incident_id}/status
+  Expected terminal state: {status: "MITIGATED", actions_completed: 3}
+
+STEP 3 — Retrieve and validate Antigravity trace:
+  curl [ORCHESTRATOR_URL]/v1/incident/{incident_id}/trace
+  Verify trace contains all required steps:
+  [ ] compute_financial_impact called (Step 1)
+  [ ] query_inventory called (Step 2)
+  [ ] search_suppliers called (Step 3)
+  [ ] create_purchase_order called and returned po_id (Step 4)
+  [ ] analyze_contract called (Step 5)
+  [ ] generate_addendum called and returned gcs_url (Step 6)
+  [ ] place_commodity_hedge called and returned order_id (Step 7)
+  [ ] Final Summary computed with total_risk_pkr > 0 (Step 8)
+
+STEP 4 — Verify Firestore data:
+  Check Firestore collection "incidents" for document with incident_id
+  Verify fields: status="mitigated", risk_pkr > 0, antigravity_run_id present
+
+STEP 5 — Verify Mock API calls succeeded:
+  Check Firestore "purchase_orders" — new document created
+  Check Firestore "approval_requests" — addendum approval request created
+  Check Firestore "hedge_trades" — new trade document created
+  Check GCS gs://chaingaurd-contracts/addendums/ — new .txt file exists
+
+STEP 6 — Verify Firebase RTDB updated:
+  Check /dashboard/metrics — risk values updated
+  Check /dashboard/nodes — at least one node has status "DISRUPTED" then "MITIGATED"
+  Check /incidents — new incident entry visible to mobile app
+
+STEP 7 — Test HITL flow:
+  Run same test with confidence_override=0.70 to force HITL trigger
+  Verify /hitl_pending/{id} created in Firestore
+  Call POST /v1/hitl/approve — verify execution resumes
+
+OUTPUT REQUIRED:
+{
+  "phase": "7",
+  "step": "14",
+  "incident_id": "uuid",
+  "test_scenario": "15% Regulatory Duty",
+  "trace_validation": {
+    "total_steps": N,
+    "all_required_tools_called": true/false,
+    "missing_tools": []
+  },
+  "firestore_validation": {
+    "incident_document": "EXISTS",
+    "purchase_order": "EXISTS", 
+    "approval_request": "EXISTS",
+    "hedge_trade": "EXISTS"
+  },
+  "gcs_validation": {
+    "addendum_file": "EXISTS",
+    "raw_incident_data": "EXISTS"
+  },
+  "rtdb_validation": {
+    "metrics_updated": true,
+    "nodes_updated": true
+  },
+  "financial_outcome": {
+    "total_risk_pkr": N,
+    "mitigated_pkr": N,
+    "net_risk_pkr": N
+  },
+  "hitl_test": "PASSED",
+  "overall_test_result": "ALL_PASS" | "PARTIAL" | "FAILED",
+  "failed_assertions": []
+}
+"""
+
+------------------------------------------------------------------------
+PHASE 7 | PROMPT 15 — Performance & Stress Test
+------------------------------------------------------------------------
+
+"""
+CONTEXT: Integration test passed. Run performance validation.
+
+TASK: Run these performance tests and report results.
+
+TEST 1 — Response time test:
+  Fire 5 test incidents sequentially, measure time from trigger to "PROCESSING" response.
+  Expected: Each response < 2 seconds.
+
+TEST 2 — End-to-end mitigation time:
+  Measure time from incident detection to status="MITIGATED" for 3 test runs.
+  Expected: < 5 minutes per incident.
+
+TEST 3 — Concurrent load test (light):
+  Fire 3 incidents simultaneously.
+  Verify all 3 complete successfully without errors.
+  Check Cloud Run scaling metrics (should auto-scale).
+
+TEST 4 — Fallback cascade test:
+  Temporarily set Mock Procurement API to return HTTP 500 for first call.
+  Fire incident and verify:
+  - System retries 3 times
+  - Falls back to secondary supplier list
+  - Does NOT crash or return error to user
+  Restore Mock Procurement API to normal.
+
+TEST 5 — Mock API validation (all endpoints):
+  Run automated curl test against all 12 mock API endpoints.
+  Every endpoint must return correct HTTP status code.
+
+OUTPUT REQUIRED: Test report with pass/fail for each test and timing metrics.
+"""
+
+================================================================================
+PHASE 8 — FINAL PACKAGING & README
+Antigravity Role: Documentation Generator
+Expected Duration: ~10 minutes
+================================================================================
+
+------------------------------------------------------------------------
+PHASE 8 | PROMPT 16 — Generate Complete GitHub README
+------------------------------------------------------------------------
+
+"""
+TASK: Generate a world-class GitHub README.md for ChainGaurd AI.
+
+The README must include:
+
+1. TITLE + BADGE ROW: Project name with shields for GCP, Python, React Native, Antigravity
+
+2. DEMO GIF PLACEHOLDER: ![Demo](demo/chaingaurd-demo.gif)
+
+3. ONE-LINE PITCH: "Autonomous supply chain intelligence that detects disruptions and 
+   executes mitigation across procurement, legal, and finance — before you know there's a problem."
+
+4. ARCHITECTURE DIAGRAM: ASCII art diagram of the full system layers
+
+5. FEATURE HIGHLIGHTS: Table with emoji icons for each of the 8 modules
+
+6. TECH STACK TABLE: Backend | Frontend | AI | Database | Messaging | Auth columns
+
+7. QUICK START (5 steps):
+   - Prerequisites
+   - Clone repo
+   - GCP setup (run setup.sh)
+   - Configure secrets
+   - Deploy (one command)
+
+8. API REFERENCE: Table of all 15+ endpoints with method, path, description
+
+9. ENVIRONMENT VARIABLES: Complete table of all 19 variables
+
+10. DEMO SCENARIO: The PKR 5.2M regulatory duty scenario walkthrough
+
+11. ANTIGRAVITY TRACE EXAMPLE: Sample ReAct trace snippet
+
+12. BUSINESS IMPACT: Before/After metrics table
+
+13. CONTRIBUTING: Guidelines section
+
+14. LICENSE: MIT License
+
+Generate the complete README.md content ready to commit to GitHub.
+"""
+
+================================================================================
+POST-DEPLOYMENT VERIFICATION COMMANDS
+(Run These Manually After All Phases Complete)
+================================================================================
+
+# 1. Check all Cloud Run services are healthy:
+gcloud run services list --platform=managed --region=asia-south1
+
+# 2. Check all Cloud Functions are active:
+gcloud functions list --gen2 --region=asia-south1
+
+# 3. Verify Cloud Scheduler jobs are scheduled:
+gcloud scheduler jobs list --location=asia-south1
+
+# 4. Check Pub/Sub subscription push endpoint is updated:
+gcloud pubsub subscriptions describe chaingaurd-orchestrator-sub
+
+# 5. Verify Firestore has collections:
+# (Check Firebase Console > Firestore > incidents collection exists)
+
+# 6. Full system test (the master scenario):
+curl -X POST $ORCHESTRATOR_URL/v1/incident/process \
+  -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+  -H "Content-Type: application/json" \
+  -d @test_payloads/master_demo_scenario.json
+
+================================================================================
+TROUBLESHOOTING GUIDE
+================================================================================
+
+ERROR: "Cloud Run service not found"
+FIX: Check deploy region matches REGION_PRIMARY. Verify image was pushed to Artifact Registry.
+
+ERROR: "Secret not found in Secret Manager"
+FIX: Run: gcloud secrets list --project=PROJECT_ID and verify secret name matches exactly.
+
+ERROR: "Cloud SQL connection refused"
+FIX: Ensure Cloud SQL Auth Proxy is configured. Check CLOUD_SQL_CONNECTION format.
+
+ERROR: "Antigravity API quota exceeded"
+FIX: Check quotas at console.cloud.google.com/quotas. Request increase if needed.
+
+ERROR: "Pub/Sub push subscription failing (403)"
+FIX: Ensure service account has pubsub.subscriber role AND Cloud Run invoker role.
+
+ERROR: "Firebase RTDB permission denied"
+FIX: Set Firebase RTDB rules to allow read/write for service account:
+  {".read": "auth != null", ".write": "auth != null"}
+
+ERROR: "Mobile app cannot connect to orchestrator"
+FIX: Add orchestrator URL to allowed CORS origins in Cloud Run service config.
+
+ERROR: "HITL approve endpoint returns 401"
+FIX: Verify Firebase Auth token is passed correctly. Check HITL_APPROVER_TOKEN in secrets.
+
+================================================================================
+END OF CHAINGAURD AI MASTER ANTIGRAVITY IMPLEMENTATION PROMPT FILE
+Total Phases: 8 | Total Prompts: 16 | Estimated Total Time: ~3 hours
+Each prompt is self-contained with verification — zero ambiguity for Antigravity.
+================================================================================

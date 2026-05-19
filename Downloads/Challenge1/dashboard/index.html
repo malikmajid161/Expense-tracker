@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChainGaurd AI — Next-Gen Control Room</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2.2">
+</head>
+<body>
+    <!-- Top-level In-app Toast Notification Alert -->
+    <div class="notification-toast" id="notification-toast">
+        <div class="toast-icon">🚨</div>
+        <div class="toast-body">
+            <h4 id="toast-title">Critical Disruption Detected</h4>
+            <p id="toast-desc">Customs Tariff duty increase on imports initiated.</p>
+        </div>
+        <button class="toast-close" onclick="closeToast()">&times;</button>
+    </div>
+
+    <!-- Navigation Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <span class="pulse-dot active"></span>
+                <h1>ChainGaurd <span class="accent-text">AI</span></h1>
+                <span class="badge badge-primary">Enterprise Portal</span>
+            </div>
+            
+            <!-- Beautiful Tab Switchers -->
+            <nav class="header-nav">
+                <button class="tab-btn active" data-tab="tab-control-room">Control Room Dashboard</button>
+                <button class="tab-btn" data-tab="tab-threat-analyzer">Threat & PDF Analyzer</button>
+                <button class="tab-btn" data-tab="tab-supplier-alerts">Supplier Email Centre</button>
+                <button class="tab-btn" data-tab="tab-google-sheets">Live Threat Sheet (Google Sheets)</button>
+                <button class="tab-btn" data-tab="tab-mobile-simulator">Mobile App Preview</button>
+            </nav>
+
+            <div class="system-status">
+                <span class="status-label">Orchestrator:</span>
+                <span class="status-value text-success" id="connection-status">CONNECTED (LIVE API)</span>
+            </div>
+            <div class="system-status" style="margin-left: 20px; border-left: 1px solid #E2E8F0; padding-left: 20px;">
+                <span class="status-label">Queue Monitor:</span>
+                <span class="status-value text-primary" id="scheduler-status">INITIALIZING</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-wrapper">
+        <!-- ==================== TAB 1: MAIN CONTROL ROOM ==================== -->
+        <div class="tab-content active" id="tab-control-room">
+            <div class="dashboard-grid">
+                <!-- Left Column: Metrics, Map, Charts -->
+                <div class="left-column">
+                    <!-- Live Metrics -->
+                    <div class="card metrics-card">
+                        <div class="metrics-header">
+                            <h2>Financial Exposure Registry</h2>
+                            <span class="currency-badge">PKR</span>
+                        </div>
+                        <div class="metrics-grid">
+                            <div class="metric-item">
+                                <span class="metric-label">Risk Exposure</span>
+                                <span class="metric-value text-danger" id="metric-risk">PKR 0.00</span>
+                            </div>
+                            <div class="metric-divider"></div>
+                            <div class="metric-item">
+                                <span class="metric-label">Mitigated Value</span>
+                                <span class="metric-value text-success" id="metric-mitigated">PKR 0.00</span>
+                            </div>
+                            <div class="metric-divider"></div>
+                            <div class="metric-item">
+                                <span class="metric-label">Net Exposure</span>
+                                <span class="metric-value text-warning" id="metric-net">PKR 0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Supply Chain Map -->
+                    <div class="card map-card">
+                        <div class="card-header">
+                            <h2>Supply Chain Topology</h2>
+                            <span class="badge badge-success-soft" id="map-status">ALL SEGMENTS RUNNING IN TOLERANCE</span>
+                        </div>
+                        <div class="map-container">
+                            <svg viewBox="0 0 800 350" class="network-svg">
+                                <defs>
+                                    <linearGradient id="grad-shanghai-karachi" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.6"/>
+                                        <stop offset="100%" stop-color="#E2E8F0" stop-opacity="0.3"/>
+                                    </linearGradient>
+                                    <linearGradient id="grad-karachi-factory" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#10B981" stop-opacity="0.6"/>
+                                        <stop offset="100%" stop-color="#E2E8F0" stop-opacity="0.3"/>
+                                    </linearGradient>
+                                </defs>
+                                <g class="network-links">
+                                    <path d="M 100 150 Q 260 90, 400 220" fill="none" stroke="url(#grad-shanghai-karachi)" stroke-width="2.5" class="flow-line active" id="link-shanghai" />
+                                    <line x1="280" y1="280" x2="400" y2="220" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="6,4" />
+                                    <path d="M 400 220 Q 550 140, 700 130" fill="none" stroke="url(#grad-karachi-factory)" stroke-width="2.5" class="flow-line active" id="link-factory" />
+                                    <line x1="700" y1="130" x2="700" y2="280" stroke="#CBD5E1" stroke-width="2" />
+                                </g>
+                                <g class="network-nodes">
+                                    <g class="node-group" id="node-shanghai">
+                                        <circle cx="100" cy="150" r="12" class="pulse-ring success" />
+                                        <circle cx="100" cy="150" r="7" class="node success" />
+                                        <text x="100" y="175" class="node-label">Shanghai Port</text>
+                                    </g>
+                                    <g class="node-group" id="node-gwadar">
+                                        <circle cx="280" cy="280" r="12" class="pulse-ring success" />
+                                        <circle cx="280" cy="280" r="7" class="node success" />
+                                        <text x="280" y="305" class="node-label">Gwadar Port</text>
+                                    </g>
+                                    <g class="node-group" id="node-karachi">
+                                        <circle cx="400" cy="220" r="16" class="pulse-ring success" id="ring-karachi" />
+                                        <circle cx="400" cy="220" r="9" class="node success" id="dot-karachi" />
+                                        <text x="400" y="250" class="node-label highlight-bold">Karachi Port (KPT)</text>
+                                    </g>
+                                    <g class="node-group" id="node-lahore">
+                                        <circle cx="700" cy="130" r="12" class="pulse-ring success" />
+                                        <circle cx="700" cy="130" r="7" class="node success" />
+                                        <text x="700" y="110" class="node-label">Lahore Factory</text>
+                                    </g>
+                                    <g class="node-group" id="node-warehouse">
+                                        <circle cx="700" cy="280" r="12" class="pulse-ring success" />
+                                        <circle cx="700" cy="280" r="7" class="node success" />
+                                        <text x="700" y="305" class="node-label">Warehouse (RM)</text>
+                                    </g>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Risk & Mitigation Trend Chart -->
+                    <div class="card chart-card">
+                        <div class="card-header">
+                            <h2>Mitigation Velocity Trends</h2>
+                            <span class="status-label text-muted">Financial Protection Index</span>
+                        </div>
+                        <div class="chart-container">
+                            <svg viewBox="0 0 500 160" class="svg-chart">
+                                <!-- Grid Lines -->
+                                <line x1="30" y1="20" x2="480" y2="20" stroke="#F1F5F9" stroke-width="1"/>
+                                <line x1="30" y1="70" x2="480" y2="70" stroke="#F1F5F9" stroke-width="1"/>
+                                <line x1="30" y1="120" x2="480" y2="120" stroke="#F1F5F9" stroke-width="1"/>
+                                
+                                <!-- Risk Trend (Area & Line) -->
+                                <path d="M 30 120 L 100 100 L 200 40 L 300 35 L 400 35 L 480 35 L 480 120 Z" fill="rgba(239, 68, 68, 0.04)" />
+                                <path d="M 30 120 L 100 100 L 200 40 L 300 35 L 400 35 L 480 35" fill="none" stroke="var(--danger)" stroke-width="2.5" />
+                                
+                                <!-- Mitigated Trend (Area & Line) -->
+                                <path d="M 30 120 L 100 120 L 200 120 L 300 80 L 400 50 L 480 40 L 480 120 Z" fill="rgba(16, 185, 129, 0.05)" />
+                                <path d="M 30 120 L 100 120 L 200 120 L 300 80 L 400 50 L 480 40" fill="none" stroke="var(--success)" stroke-width="2.5" />
+                                
+                                <!-- Dots -->
+                                <circle cx="480" cy="35" r="4" fill="var(--danger)"/>
+                                <circle cx="480" cy="40" r="4" fill="var(--success)"/>
+                            </svg>
+                            <div class="chart-legend">
+                                <span class="legend-item"><span class="legend-dot bg-danger"></span> Gross Disruption Exposure</span>
+                                <span class="legend-item"><span class="legend-dot bg-success"></span> Mitigated Safeguard Value</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Incident & Timeline Details -->
+                <div class="right-column">
+                    <!-- Active Incident Info -->
+                    <div class="card incident-card">
+                        <div class="card-header">
+                            <h2>Disruption Incident Monitor</h2>
+                            <span class="badge badge-danger-soft" id="active-incident-badge">NO ACTIVE DISRUPTIONS</span>
+                        </div>
+                        <div class="incident-details" id="incident-details-area">
+                            <p class="empty-state">No incidents are active. Upload a PDF or paste an article URL in the **Threat Analyzer** tab to kick off live agent mitigations.</p>
+                        </div>
+                    </div>
+
+                    <!-- Beautiful Non-JSON Mitigation Timeline -->
+                    <div class="card trace-card">
+                        <div class="card-header">
+                            <h2>Mitigation Swarm Timelines</h2>
+                            <span class="status-label text-success">Vertex AI Orchestration</span>
+                        </div>
+                        <div class="timeline-container" id="timeline-area">
+                            <p class="empty-state">Waiting for parsed event execution...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 2: THREAT & PDF ANALYZER ==================== -->
+        <div class="tab-content" id="tab-threat-analyzer">
+            <div class="analyzer-grid">
+                <div class="card analyzer-input-card">
+                    <div class="card-header">
+                        <h2>Live Threat & SCM Document Parser</h2>
+                    </div>
+                    
+                    <!-- URL Paste Section -->
+                    <div class="input-section">
+                        <label class="input-label">Paste Customs Circular, Policy, or News Article URL</label>
+                        <div class="input-group">
+                            <input type="text" class="text-input" id="input-article-url" placeholder="https://www.fbr.gov.pk/circulars/customs-tariff-duty-2026...">
+                            <button class="btn btn-primary" id="btn-fetch-url">Analyze URL</button>
+                        </div>
+                    </div>
+
+                    <!-- PDF Upload Section -->
+                    <div class="input-section">
+                        <label class="input-label">Drag & Drop official PDF Reports or Contracts</label>
+                        <div class="pdf-dropzone" id="pdf-dropzone">
+                            <div class="dropzone-content">
+                                <span class="dropzone-icon">📄</span>
+                                <p class="dropzone-text">Drag and drop SRO / PDF report files here or click to select</p>
+                                <span class="dropzone-subtext">Supports PDF, DOCX, TXT up to 10MB</span>
+                            </div>
+                            <input type="file" id="file-input" style="display: none;" accept=".pdf,.docx,.txt">
+                        </div>
+                        <div class="file-info-bar" id="file-info-bar" style="display: none;">
+                            <span class="file-name" id="selected-file-name">FBR_SRO_112_2026.pdf</span>
+                            <button class="btn btn-outline btn-sm" id="btn-upload-file">Process PDF Document</button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Simulation Scenarios -->
+                    <div class="input-section">
+                        <label class="input-label">Quick Sandbox Threats</label>
+                        <div class="sandbox-buttons">
+                            <button class="btn btn-outline btn-full text-danger" id="quick-scenario-tariff">
+                                ⚠️ Simulate live 15% Tariff on Batteries
+                            </button>
+                            <button class="btn btn-outline btn-full text-warning" id="quick-scenario-strike">
+                                ⚓ Simulate Karachi Port Labor Strike
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Output Drawer -->
+                <div class="card analyzer-results-card">
+                    <div class="card-header">
+                        <h2>Structured AI Analysis & Insights</h2>
+                        <span class="badge badge-primary-soft" id="analysis-state">AWAITING INPUT</span>
+                    </div>
+                    <div class="analysis-results-body" id="analysis-results-body">
+                        <div class="empty-state">
+                            <p>Upload a document or enter an article URL to initiate real-time structural risk analysis and run downstream agents.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 3: SUPPLIER EMAIL CENTRE ==================== -->
+        <div class="tab-content" id="tab-supplier-alerts">
+            <div class="supplier-grid">
+                <div class="card supplier-list-card">
+                    <div class="card-header">
+                        <h2>Active Corporate Supplier Registry</h2>
+                    </div>
+                    <div class="supplier-list-wrapper">
+                        <table class="supplier-table">
+                            <thead>
+                                <tr>
+                                    <th>Supplier Name</th>
+                                    <th>City</th>
+                                    <th>Official Contact Email</th>
+                                    <th>Primary Materials</th>
+                                    <th>Lead Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Karachi Electronics Hub</strong></td>
+                                    <td>Karachi</td>
+                                    <td><span class="email-tag">sales@karachielectronics.pk</span></td>
+                                    <td>PCB Boards, Capacitors</td>
+                                    <td>1 Day</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Lahore Industrial Zone</strong></td>
+                                    <td>Lahore</td>
+                                    <td><span class="email-tag">orders@lahoreindustrial.pk</span></td>
+                                    <td>Lithium Battery, Electric Motors</td>
+                                    <td>3 Days</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Islamabad Component Store</strong></td>
+                                    <td>Islamabad</td>
+                                    <td><span class="email-tag">contact@islamabadcomponents.com</span></td>
+                                    <td>Microcontrollers, ICs</td>
+                                    <td>4 Days</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Sialkot Metal Alloys</strong></td>
+                                    <td>Sialkot</td>
+                                    <td><span class="email-tag">procurement@sialkotalloys.com</span></td>
+                                    <td>Aluminum, Copper Wire</td>
+                                    <td>2 Days</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Alert & Email Notification Hub -->
+                <div class="card email-action-card">
+                    <div class="card-header">
+                        <h2>Automated Supplier Alert Centre</h2>
+                        <span class="badge badge-success-soft">EMAIL SERVICE ALIVE</span>
+                    </div>
+                    <div class="email-status-panel">
+                        <div class="email-meta-inputs">
+                            <div class="meta-row">
+                                <span class="meta-lbl">Authorized Sender:</span>
+                                <span class="meta-val text-primary" id="email-sender">malikmajid5140@gmail.com</span>
+                            </div>
+                            <div class="meta-row">
+                                <span class="meta-lbl">Recipient Group:</span>
+                                <span class="meta-val">All Affected Alternate Vendors</span>
+                            </div>
+                        </div>
+
+                        <div class="email-logs-header">
+                            <h3>Alert Transmission Logs</h3>
+                        </div>
+                        <div class="email-logs-container" id="email-logs-area">
+                            <p class="empty-state">No email alerts have been dispatched yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB: LIVE GOOGLE SHEETS ==================== -->
+        <div class="tab-content" id="tab-google-sheets">
+            <div class="card" style="border-left: 4px solid #0F9D58; padding: 24px;">
+                <div class="card-header" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 28px;">📊</span>
+                        <div>
+                            <h2 style="font-size: 16px; margin: 0; font-weight: 700;">Live Threat & Incident Ledger (Google Sheets Real-Time Sync)</h2>
+                            <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">This ledger mirrors a live Google Spreadsheet. Any incoming threat, news article, or automated scraper event appends here dynamically.</p>
+                        </div>
+                    </div>
+                    <div class="sheet-buttons" style="display: flex; gap: 8px;">
+                        <button class="btn btn-outline btn-sm" id="btn-export-csv" style="padding: 8px 12px; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: var(--radius-sm);">📥 Export CSV</button>
+                        <button class="btn btn-outline btn-sm" id="btn-clear-sheet" style="padding: 8px 12px; font-size: 12px; font-weight: 600; cursor: pointer; border-radius: var(--radius-sm); color: var(--danger); border-color: rgba(239, 68, 68, 0.2);">🗑️ Clear Logs</button>
+                    </div>
+                </div>
+                
+                <!-- Configurations Bar -->
+                <div class="sheet-actions-bar" style="background-color: #F8FAFC; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
+                    <div class="sheet-config-panel" style="display: flex; align-items: center; gap: 12px; width: 100%; flex-wrap: wrap;">
+                        <span class="status-label" style="font-weight: 600; font-size: 12px; white-space: nowrap; color: var(--text-primary);">Google Sheets Webhook URL:</span>
+                        <input type="text" class="text-input" id="input-sheet-webhook" placeholder="https://script.google.com/macros/s/.../exec" style="padding: 8px 12px; font-size: 12px; flex: 1; min-width: 250px;">
+                        <button class="btn btn-primary btn-sm" id="btn-save-sheet-webhook" style="padding: 8px 14px; font-size: 12px; font-weight: 600; border-radius: var(--radius-sm);">🔌 Bind Sheet</button>
+                        <span class="badge badge-success-soft" id="sheet-sync-status" style="font-weight: 700; padding: 6px 12px; border-radius: var(--radius-sm);">OFFLINE SANDBOX MODE</span>
+                    </div>
+                </div>
+
+                <div class="sheet-container" style="display: flex; flex-direction: column; background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; height: 500px; box-shadow: var(--shadow-sm);">
+                    <!-- Sheets formula bar simulator -->
+                    <div style="display: flex; border-bottom: 1px solid var(--border-color); font-size: 12px; background: #F1F5F9; align-items: center;">
+                        <div style="font-family: var(--font-mono); padding: 8px 16px; background: #E2E8F0; font-weight: bold; border-right: 1px solid var(--border-color); width: 60px; text-align: center; color: var(--text-muted);">fx</div>
+                        <input type="text" id="sheets-formula-bar" readonly value="=QUERY(A:I, &quot;SELECT * WHERE I = 'MITIGATED'&quot;)" style="flex: 1; border: none; background: transparent; padding: 8px 16px; outline: none; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); width: 100%;">
+                    </div>
+                    
+                    <div class="sheet-table-wrapper" style="flex: 1; overflow: auto;">
+                        <table class="google-sheet-table" id="threats-sheet-table">
+                            <thead>
+                                <tr>
+                                    <th class="row-num" style="width: 40px; background-color: #F1F5F9; border: 1px solid #CBD5E1;"></th>
+                                    <th style="width: 160px; background-color: #F1F5F9; border: 1px solid #CBD5E1; color: var(--text-muted); font-weight: 600; padding: 8px 12px; text-align: left; font-size: 11px;">A: Timestamp (UTC)</th>
+                                    <th style="width: 100px; background-color: #F1F5F9; border: 1px solid #CBD5E1; color: var(--text-muted); font-weight: 600; padding: 8px 12px; text-align: left; font-size: 11px;">B: Incident ID</th>
+                                    <th style="width: 80px; background-color: #F1F5F9; border: 1px solid #CBD5E1; color: var(--text-muted); font-weight: 600; padding: 8px 12px; text-align: left; font-size: 11px;">C: Risk Score</th>
+                                    <th style="width: 100px; background-color: #F1F5F9; border: 1px solid #CBD5E1; color: var(--text-muted); font-weight: 600; padding: 8px 12px; text-align: left; font-size: 11px;">D: Source</th>
+                                    <th style="width: 140px; background-color: #F1F5F9; border: 1px solid #CBD5E1; color: var(--text-muted); font-weight: 600; padding: 8px 12px; text-align: left; font-size: 11px;">E: Exposure (PKR)</th>
+                                    <th style="width: 140px; background-color: #F1F5F9; border: 1px solid #CBD5E1; color: var(--text-muted); font-weight: 600; padding: 8px 12px; text-align: left; font-size: 11px;">F: Mitigated (PKR)</th>
+                                    <th style="width: 140px; background-color: #F1F5F9; border: 1px solid #CBD5E1; color: var(--text-muted); font-weight: 600; padding: 8px 12px; text-align: left; font-size: 11px;">G: Net Risk (PKR)</th>
+                                    <th style="width: 320px; background-color: #F1F5F9; border: 1px solid #CBD5E1; color: var(--text-muted); font-weight: 600; padding: 8px 12px; text-align: left; font-size: 11px;">H: Threat Title</th>
+                                    <th style="width: 120px; background-color: #F1F5F9; border: 1px solid #CBD5E1; color: var(--text-muted); font-weight: 600; padding: 8px 12px; text-align: left; font-size: 11px;">I: Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sheet-rows-body">
+                                <!-- Dynamic sheet rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Accordion Setup Instructions -->
+                <details style="margin-top: 20px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: #F8FAFC;">
+                    <summary style="padding: 12px 16px; font-weight: 600; cursor: pointer; user-select: none; font-size: 13px; color: var(--text-primary); outline: none;">⚙️ How to Connect this App to Your Real Google Sheets Spreadsheet</summary>
+                    <div style="padding: 16px; border-top: 1px solid var(--border-color); font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+                        <p style="margin-bottom: 12px;">You can automatically populate an actual Google Sheet with new threats in real time by setting up a simple Google Apps Script webhook receiver:</p>
+                        <ol style="margin-left: 20px; margin-bottom: 16px;">
+                            <li>Open <a href="https://sheets.google.com" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline;">Google Sheets</a> and create a blank spreadsheet.</li>
+                            <li>Go to <strong>Extensions > Apps Script</strong>.</li>
+                            <li>Delete the default code and paste the script below.</li>
+                            <li>Click <strong>Deploy > New Deployment</strong>. Choose <strong>Web App</strong>.</li>
+                            <li>Set <em>"Execute as"</em> to <strong>Me (your email)</strong> and <em>"Who has access"</em> to <strong>Anyone</strong>.</li>
+                            <li>Deploy, grant the necessary permissions, copy the generated Web App URL, and paste it into the <strong>Google Sheets Webhook URL</strong> field above!</li>
+                        </ol>
+                        
+                        <div style="position: relative;">
+                            <span style="position: absolute; right: 10px; top: 10px; font-size: 11px; background: var(--primary-light); color: var(--primary); padding: 2px 6px; border-radius: 4px; font-weight: bold;">Google Apps Script Code</span>
+                            <pre style="background: #0F172A; color: #38BDF8; padding: 16px; border-radius: var(--radius-md); overflow-x: auto; font-family: var(--font-mono); font-size: 11px; max-height: 250px;">
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  
+  if (sheet.getLastRow() == 0) {
+    sheet.appendRow(["Timestamp (UTC)", "Incident ID", "Risk Score", "Source", "Financial Exposure (PKR)", "Mitigated Value (PKR)", "Net Exposure (PKR)", "Threat News Title", "Status"]);
+  }
+  
+  var rows = sheet.getDataRange().getValues();
+  var foundIndex = -1;
+  for (var i = 1; i < rows.length; i++) {
+    if (rows[i][1] == data.incident_id) {
+      foundIndex = i + 1;
+      break;
+    }
+  }
+  
+  var rowData = [
+    data.timestamp || new Date().toISOString(),
+    data.incident_id,
+    data.risk_score,
+    data.source,
+    data.risk_pkr,
+    data.mitigated_pkr,
+    data.net_risk_pkr,
+    data.title,
+    data.status
+  ];
+  
+  if (foundIndex != -1) {
+    var range = sheet.getRange(foundIndex, 1, 1, rowData.length);
+    range.setValues([rowData]);
+  } else {
+    sheet.appendRow(rowData);
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({"status": "success"}))
+                       .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 4: MOBILE SIMULATOR ==================== -->
+        <div class="tab-content" id="tab-mobile-simulator">
+            <div class="simulator-wrapper">
+                <div class="simulator-desc">
+                    <h2>VP Operations Mobile App Simulator</h2>
+                    <p>This panel runs the premium, dark-themed **ChainGaurd React Native Mobile UI** within an interactive device wrapper, keeping track of Firestore states and pushing notifications.</p>
+                    
+                    <div class="device-actions">
+                        <button class="btn btn-outline" id="btn-simulate-push">Push Mobile Notification</button>
+                    </div>
+                </div>
+
+                <!-- Beautiful CSS Rendered Device Frame -->
+                <div class="iphone-frame">
+                    <div class="iphone-speaker"></div>
+                    <div class="iphone-screen">
+                        <!-- Simulated React Native App -->
+                        <div class="mobile-app">
+                            <div class="mobile-header">
+                                <span class="mobile-carrier">ChainGaurd Link</span>
+                                <div class="mobile-brand">ChainGaurd <span class="text-orange">AI</span></div>
+                                <span class="mobile-battery">🔋 98%</span>
+                            </div>
+
+                            <!-- Screen Contents (Dynamic Tab Content Panels) -->
+                            <div class="mobile-body">
+                                
+                                <!-- MOBILE TAB 1: HOME/DASHBOARD -->
+                                <div class="m-tab-content active" id="m-tab-home">
+                                    <div class="mobile-card">
+                                        <div class="mobile-card-title">LIVE PORT EXPOSURE</div>
+                                        <div class="mobile-metrics">
+                                            <div class="m-metric text-red">
+                                                <span class="m-lbl">RISK EXPOSED</span>
+                                                <span class="m-val" id="m-risk">PKR 0.00</span>
+                                            </div>
+                                            <div class="m-metric text-green">
+                                                <span class="m-lbl">MITIGATED</span>
+                                                <span class="m-val" id="m-mitigated">PKR 0.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mobile-card">
+                                        <div class="mobile-card-title">SUPPLY NETWORK TOPOLOGY</div>
+                                        <div class="mobile-map-box">
+                                            <svg viewBox="0 0 300 130" style="width: 100%; height: auto;">
+                                                <path d="M 30 50 Q 150 20, 270 80" fill="none" stroke="#FFA500" stroke-width="1.5" stroke-dasharray="3,2"/>
+                                                <circle cx="30" cy="50" r="5" fill="#10B981" />
+                                                <circle cx="150" cy="25" r="5" fill="#EF4444" class="mobile-pulse" />
+                                                <circle cx="270" cy="80" r="5" fill="#10B981" />
+                                            </svg>
+                                        </div>
+                                    </div>
+
+                                    <div class="mobile-card">
+                                        <div class="mobile-card-title">ACTIVE SWARM AGENT STEPS</div>
+                                        <div class="mobile-timeline" id="mobile-timeline-area">
+                                            <div class="m-timeline-empty">All networks clear.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- MOBILE TAB 2: THREAT CENTER -->
+                                <div class="m-tab-content" id="m-tab-threats">
+                                    <div class="mobile-card">
+                                        <div class="mobile-card-title">PASTE REGULATORY URL</div>
+                                        <div class="m-input-group" style="display: flex; gap: 6px; margin-top: 6px; flex-direction: column;">
+                                            <input type="text" class="m-text-input" id="m-input-url" placeholder="Paste circular or news URL" style="width: 100%; font-size: 10px; padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #0F172A; color: #fff; outline: none;">
+                                            <button class="m-btn m-btn-green" id="m-btn-analyze-url" style="width: 100%; padding: 8px 10px; text-align: center; justify-content: center; font-weight: 700; border: none; cursor: pointer;">Analyze Live URL</button>
+                                        </div>
+                                    </div>
+                                    <div class="mobile-card">
+                                        <div class="mobile-card-title">SANDBOX SHORTCUTS</div>
+                                        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px;">
+                                            <button class="m-btn m-btn-outline" id="m-scenario-tariff" style="text-align: left; font-size: 9px; padding: 10px; cursor: pointer; border: 1px solid #475569; border-radius: 6px;">⚠️ Run 15% Battery Tariff</button>
+                                            <button class="m-btn m-btn-outline" id="m-scenario-strike" style="text-align: left; font-size: 9px; padding: 10px; cursor: pointer; border: 1px solid #475569; border-radius: 6px;">⚓ Run Karachi Port Strike</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- MOBILE TAB 3: EMAIL LOGS -->
+                                <div class="m-tab-content" id="m-tab-emails">
+                                    <div class="mobile-card">
+                                        <div class="mobile-card-title">TRANSMITTED EMAIL LOGS</div>
+                                        <div class="m-emails-container" id="m-emails-area" style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px; max-height: 380px; overflow-y: auto;">
+                                            <div class="m-timeline-empty">No email alerts dispatched yet.</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- MOBILE TAB 4: HITL GATEWAY -->
+                                <div class="m-tab-content" id="m-tab-security">
+                                    <div class="mobile-card" style="border-color: #F97316;" id="m-hitl-box">
+                                        <div class="mobile-card-title" style="color: #F97316;">AWAITING SECURITY OK</div>
+                                        <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 10px;">
+                                            <p style="color: #94A3B8; font-size: 10px; line-height: 1.4;" id="m-hitl-text">No approvals are currently pending from the central swarm.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- iOS Bottom Tab Bar Navigation -->
+                            <div class="mobile-bottom-nav">
+                                <button class="m-nav-btn active" data-mtab="m-tab-home">
+                                    <span class="m-nav-icon">🏠</span>
+                                    <span class="m-nav-lbl">Dashboard</span>
+                                </button>
+                                <button class="m-nav-btn" data-mtab="m-tab-threats">
+                                    <span class="m-nav-icon">🛡️</span>
+                                    <span class="m-nav-lbl">Threats</span>
+                                </button>
+                                <button class="m-nav-btn" data-mtab="m-tab-emails">
+                                    <span class="m-nav-icon">✉️</span>
+                                    <span class="m-nav-lbl">Emails</span>
+                                </button>
+                                <button class="m-nav-btn" data-mtab="m-tab-security">
+                                    <span class="m-nav-icon">🔑</span>
+                                    <span class="m-nav-lbl">HITL Gate</span>
+                                </button>
+                            </div>
+
+                            <!-- Mobile Sliding Action Banner (Interactive lockscreen notification) -->
+                            <div class="mobile-action-banner" id="mobile-action-banner">
+                                <div class="banner-title">🔑 AUTHORIZATION REQUIRED</div>
+                                <p class="banner-text" id="mobile-banner-text">Verify Lithium Future Commodity Hedging Locks.</p>
+                                <div class="banner-buttons">
+                                    <button class="m-btn m-btn-green" id="mobile-btn-approve">Approve</button>
+                                    <button class="m-btn m-btn-outline" id="mobile-btn-reject">Decline</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="iphone-home-button"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sliding HITL Modal Drawer -->
+    <div class="hitl-drawer" id="hitl-drawer">
+        <div class="drawer-content">
+            <div class="drawer-header">
+                <div class="header-left">
+                    <span class="badge badge-warning">AWAITING ADMINISTRATOR ACTION</span>
+                    <h3>Secure Financial Transaction Approval Requested</h3>
+                </div>
+                <span class="confidence-score">Confidence Score: <strong id="hitl-confidence">92%</strong></span>
+            </div>
+            <p class="drawer-description" id="hitl-description">
+                The agent proposes locking in bulk alternate parts procurement terms.
+            </p>
+            <div class="drawer-actions">
+                <button class="btn btn-success" id="btn-hitl-approve">Authorize Action</button>
+                <button class="btn btn-outline-danger" id="btn-hitl-reject">Decline Transaction</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=2.2"></script>
+</body>
+</html>
