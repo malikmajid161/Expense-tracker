@@ -40,3 +40,4 @@ flutter:
   # Load the .env file as an asset so flutter_dotenv can read it
   assets:
     - .env
+    - shorebird.yaml
