@@ -3,6 +3,10 @@
 A high-fidelity, premium digital ledger and expense tracker built with **Flutter** and **Supabase**. It is optimized for high readability, user accessibility, and multi-device responsiveness.
 
 <p align="center">
+  <img src="logo.png" alt="SpendWise Premium Logo" width="140" style="border-radius: 28px;" />
+</p>
+
+<p align="center">
   <img src="screenshot.png" alt="SpendWise Premium Interface" width="360" />
 </p>
 
