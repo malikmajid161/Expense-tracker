@@ -1,0 +1,42 @@
+name: expense_tracker
+description: "Expense Tracker (Khata) - A simple expense tracking app for everyone."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Supabase backend
+  supabase_flutter: ^2.8.0
+
+  # State management
+  provider: ^6.1.2
+
+  # Environment variables (.env)
+  flutter_dotenv: ^5.2.1
+
+  # Formatting (currency, dates)
+  intl: ^0.19.0
+
+  # Local offline cache
+  shared_preferences: ^2.3.2
+
+  # Icons
+  cupertino_icons: ^1.0.8
+  image_picker: ^1.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Load the .env file as an asset so flutter_dotenv can read it
+  assets:
+    - .env
