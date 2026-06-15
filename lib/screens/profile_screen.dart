@@ -325,6 +325,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                         onSubmitted: (_) => _updateUsername(),
+                        onTapOutside: (_) {
+                          FocusManager.instance.primaryFocus?.unfocus();
+                          _updateUsername();
+                        },
                       ),
                     ),
                   ),
@@ -347,6 +351,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                         onSubmitted: (v) {
                           final limit = double.tryParse(v) ?? 15000.0;
+                          context.read<AuthProvider>().updateBudgetLimit(limit);
+                        },
+                        onTapOutside: (_) {
+                          FocusManager.instance.primaryFocus?.unfocus();
+                          final limit = double.tryParse(_budgetCtrl.text) ?? 15000.0;
                           context.read<AuthProvider>().updateBudgetLimit(limit);
                         },
                       ),
