@@ -23,6 +23,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   String? _selectedCategoryId;
   String? _newCategoryName;
   bool _saving = false;
+  bool _showNumberPad = true;
 
   // Note and image fields
   final _noteCtrl = TextEditingController();
@@ -138,6 +139,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       setState(() {
         _newCategoryName = name;
         _selectedCategoryId = null;
+        _showNumberPad = false; // Hide keypad to show other details
       });
     }
   }
@@ -171,57 +173,60 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         child: Column(
           children: [
             // Amount Card
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primaryDark, AppColors.primary],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
+            GestureDetector(
+              onTap: () => setState(() => _showNumberPad = true),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primaryDark, AppColors.primary],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'HOW MUCH?',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white.withOpacity(0.7),
-                        letterSpacing: 2,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          _amount.isEmpty
-                              ? '$symbol 0'
-                              : Formatters.currency(int.parse(_amount), symbol: symbol),
-                          style: const TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: -1,
-                          ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'HOW MUCH? (TAP TO EDIT)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white.withOpacity(0.7),
+                          letterSpacing: 1.5,
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            _amount.isEmpty
+                                ? '$symbol 0'
+                                : Formatters.currency(int.parse(_amount), symbol: symbol),
+                            style: const TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: -1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -273,6 +278,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       // Note field
                       TextField(
                         controller: _noteCtrl,
+                        onTap: () {
+                          // Minimize amount keypad when note is focused to avoid layout issues
+                          setState(() => _showNumberPad = false);
+                        },
                         decoration: InputDecoration(
                           hintText: 'e.g. Dinner with team, office supplies',
                           labelText: 'Add Note',
@@ -295,7 +304,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       const SizedBox(height: 16),
                       // Receipt Picker Card
                       GestureDetector(
-                        onTap: _pickImage,
+                        onTap: () {
+                          setState(() => _showNumberPad = false);
+                          _pickImage();
+                        },
                         child: Container(
                           width: double.infinity,
                           height: 120,
@@ -403,11 +415,48 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         ),
                       ),
                       
-                      const SizedBox(height: 28),
-                      NumberPad(
-                        value: _amount,
-                        onChanged: (v) => setState(() => _amount = v),
-                      ),
+                      if (_showNumberPad) ...[
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Keypad',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () => setState(() => _showNumberPad = false),
+                              icon: const Icon(Icons.keyboard_hide, size: 18),
+                              label: const Text('Hide'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        NumberPad(
+                          value: _amount,
+                          onChanged: (v) => setState(() => _amount = v),
+                        ),
+                      ] else ...[
+                        const SizedBox(height: 20),
+                        Center(
+                          child: TextButton.icon(
+                            onPressed: () => setState(() => _showNumberPad = true),
+                            icon: const Icon(Icons.keyboard, size: 18),
+                            label: const Text('Edit Amount'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -488,6 +537,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             onTap: () => setState(() {
               _selectedCategoryId = cat.id;
               _newCategoryName = null;
+              _showNumberPad = false; // Hide keypad to show other details
             }),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),

@@ -60,4 +60,14 @@ class Expense {
         'note': note,
         'spent_at': spentAt.toIso8601String(),
       };
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'user_id': userId,
+        'category_id': categoryId,
+        'amount': amount,
+        'note': note,
+        'spent_at': spentAt.toIso8601String(),
+        'created_at': createdAt.toIso8601String(),
+      };
 }

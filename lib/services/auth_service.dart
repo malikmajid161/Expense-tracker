@@ -3,7 +3,7 @@ import 'supabase_service.dart';
 
 /// Handles all authentication with Supabase.
 class AuthService {
-  final SupabaseClient _client = SupabaseService.client;
+  SupabaseClient get _client => SupabaseService.client;
 
   /// Stream of auth state changes (used to switch between login/home).
   Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;

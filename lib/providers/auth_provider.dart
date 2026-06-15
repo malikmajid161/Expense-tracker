@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
+import '../services/supabase_service.dart';
 
 /// Holds authentication state and exposes login/signup/logout.
 class AuthProvider extends ChangeNotifier {
@@ -26,14 +27,51 @@ class AuthProvider extends ChangeNotifier {
   double get budgetLimit => _budgetLimit;
   String get currencySymbol => _currencySymbol;
 
+  StreamSubscription<AuthState>? _authSubscription;
+
   AuthProvider() {
-    _user = _auth.currentUser;
-    _auth.authStateChanges.listen((state) {
-      _user = state.session?.user;
-      loadProfile();
-      notifyListeners();
-    });
-    loadProfile();
+    _init();
+  }
+
+  Future<void> _init() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final isOffline = prefs.getBool('use_offline_mode') ?? false;
+      SupabaseService.useOfflineMode = isOffline;
+
+      if (isOffline) {
+        final email = prefs.getString('offline_user_email') ?? 'demo@example.com';
+        final username = prefs.getString('offline_user_username') ?? 'Demo User';
+        _user = User(
+          id: 'offline_user_id',
+          appMetadata: const {},
+          userMetadata: {'username': username},
+          aud: 'authenticated',
+          createdAt: DateTime.now().toIso8601String(),
+          email: email,
+        );
+      } else {
+        if (SupabaseService.isInitialized) {
+          _user = _auth.currentUser;
+          _listenToAuthChanges();
+        }
+      }
+      await loadProfile();
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  void _listenToAuthChanges() {
+    if (_authSubscription != null) return;
+    try {
+      _authSubscription = _auth.authStateChanges.listen((state) {
+        if (!SupabaseService.useOfflineMode) {
+          _user = state.session?.user;
+          loadProfile();
+          notifyListeners();
+        }
+      });
+    } catch (_) {}
   }
 
   Future<void> loadProfile() async {
@@ -81,11 +119,73 @@ class AuthProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
+  /// Activates offline demo mode with mock user details
+  Future<bool> enableOfflineMode({required String email, String? username}) async {
+    _loading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('use_offline_mode', true);
+      await prefs.setString('offline_user_email', email);
+      if (username != null) {
+        await prefs.setString('offline_user_username', username);
+      }
+
+      SupabaseService.useOfflineMode = true;
+      _user = User(
+        id: 'offline_user_id',
+        appMetadata: const {},
+        userMetadata: {'username': username ?? 'Demo User'},
+        aud: 'authenticated',
+        createdAt: DateTime.now().toIso8601String(),
+        email: email,
+      );
+
+      await loadProfile();
+      _loading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = 'Failed to enable offline mode: $e';
+      _loading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<bool> signIn(String email, String password) async {
+    if (SupabaseService.useOfflineMode) {
+      return enableOfflineMode(email: email, username: email.split('@')[0]);
+    }
+
+    try {
+      await SupabaseService.init();
+      _listenToAuthChanges();
+    } catch (e) {
+      _error = e.toString().replaceAll('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
+
     return _run(() => _auth.signIn(email: email, password: password));
   }
 
   Future<bool> signUp(String email, String password, {String? username}) async {
+    if (SupabaseService.useOfflineMode) {
+      return enableOfflineMode(email: email, username: username ?? email.split('@')[0]);
+    }
+
+    try {
+      await SupabaseService.init();
+      _listenToAuthChanges();
+    } catch (e) {
+      _error = e.toString().replaceAll('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
+
     return _run(() async {
       await _auth.signUp(email: email, password: password, username: username);
       try {
@@ -97,9 +197,26 @@ class AuthProvider extends ChangeNotifier {
     });
   }
 
-
-
   Future<bool> updateUsername(String username) async {
+    if (SupabaseService.useOfflineMode) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('offline_user_username', username);
+        _user = User(
+          id: 'offline_user_id',
+          appMetadata: const {},
+          userMetadata: {'username': username},
+          aud: 'authenticated',
+          createdAt: _user?.createdAt ?? DateTime.now().toIso8601String(),
+          email: _user?.email ?? 'demo@example.com',
+        );
+        notifyListeners();
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
     final success = await _run(() => _auth.updateUsername(username));
     if (success) {
       _user = _auth.currentUser;
@@ -109,9 +226,25 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
+    if (SupabaseService.useOfflineMode) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('use_offline_mode', false);
+      await prefs.remove('offline_user_email');
+      await prefs.remove('offline_user_username');
+      SupabaseService.useOfflineMode = false;
+      _user = null;
+      notifyListeners();
+      return;
+    }
     await _auth.signOut();
     _user = null;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
   }
 
   /// Wraps an async auth action with loading + error handling.
@@ -136,4 +269,3 @@ class AuthProvider extends ChangeNotifier {
     return false;
   }
 }
-

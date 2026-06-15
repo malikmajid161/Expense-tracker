@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
 
@@ -69,6 +70,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 
   void _showErrorDialog(String message) {
+    final auth = context.read<AuthProvider>();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -84,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(message),
-            if (message.toLowerCase().contains('timeout') || message.toLowerCase().contains('connection')) ...[
+            if (message.toLowerCase().contains('timeout') || message.toLowerCase().contains('connection') || message.toLowerCase().contains('failed to fetch')) ...[
               const SizedBox(height: 16),
               const Divider(),
               const SizedBox(height: 8),
@@ -93,13 +95,23 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               const SizedBox(height: 4),
-              const Text('• Turn on a VPN (like Cloudflare 1.1.1.1 or ProtonVPN).'),
-              const Text('• Disable Adblockers or Brave shields for localhost.'),
-              const Text('• Verify "Confirm Email" is disabled in your Supabase dashboard.'),
+              const Text('• Check your internet connection or use a VPN.'),
+              const Text('• Disable Adblockers/Shields for local dev.'),
+              const Text('• Verify Supabase keys in your .env file or try Offline Demo Mode.'),
             ],
           ],
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              auth.enableOfflineMode(
+                email: 'demo@example.com',
+                username: 'Demo User',
+              );
+            },
+            child: const Text('Try Offline Demo Mode'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('OK'),
@@ -109,11 +121,16 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -252,6 +269,22 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                       },
                                     ),
                             ),
+                            const SizedBox(height: 12),
+                            TextButton(
+                              onPressed: auth.loading
+                                  ? null
+                                  : () => auth.enableOfflineMode(
+                                        email: 'demo@example.com',
+                                        username: 'Demo User',
+                                      ),
+                              child: const Text(
+                                'Use Offline Demo Mode',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -286,4 +319,3 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     );
   }
 }
-

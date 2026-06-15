@@ -35,6 +35,14 @@ class Category {
         'icon': icon,
       };
 
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'user_id': userId,
+        'name': name,
+        'icon': icon,
+        'created_at': createdAt.toIso8601String(),
+      };
+
   Category copyWith({String? name, String? icon, double? total}) {
     return Category(
       id: id,
