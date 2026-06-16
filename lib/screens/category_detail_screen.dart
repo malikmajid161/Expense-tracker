@@ -240,15 +240,18 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Category Summary Card
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(22),
+          : OrientationBuilder(
+              builder: (context, orientation) {
+                final isPortrait = orientation == Orientation.portrait;
+                    final topSection = Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Top Category Summary Card
+                        Padding(
+                          padding: EdgeInsets.all(isPortrait ? 16 : 8),
+                          child: Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(isPortrait ? 22 : 14),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -292,13 +295,13 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                         const SizedBox(height: 10),
                         Text(
                           Formatters.currency(_subtotal, symbol: currencySymbol),
-                          style: const TextStyle(
-                            fontSize: 34,
+                          style: TextStyle(
+                            fontSize: isPortrait ? 34 : 26,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: isPortrait ? 12 : 4),
                         Text(
                           'Transactions: ${_expenses.length}',
                           style: const TextStyle(
@@ -313,10 +316,10 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                 ),
 
                 if (recordPics.isNotEmpty)
-                  _buildRecordPicsRow(recordPics),
+                  _buildRecordPicsRow(recordPics, isPortrait),
 
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 18, vertical: isPortrait ? 8 : 4),
                   child: Text(
                     'Transaction History',
                     style: TextStyle(
@@ -327,10 +330,12 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   ),
                 ),
 
-                // Transactions List
-                Expanded(
-                  child: actualExpenses.isEmpty
-                      ? const Center(
+                  ],
+                );
+
+                Widget listWidget;
+                if (actualExpenses.isEmpty) {
+                  listWidget = const Center(
                           child: Padding(
                             padding: EdgeInsets.all(32),
                             child: Column(
@@ -347,9 +352,12 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                               ],
                             ),
                           ),
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                        );
+                } else {
+                  listWidget = ListView.separated(
+                    shrinkWrap: !isPortrait,
+                    physics: isPortrait ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                           itemCount: actualExpenses.length,
                           separatorBuilder: (_, __) => const SizedBox(height: 10),
                           itemBuilder: (context, i) {
@@ -437,14 +445,35 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                               ),
                             );
                           },
-                        ),
-                ),
-              ],
+                        );
+                }
+
+                if (isPortrait) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      topSection,
+                      Expanded(child: listWidget),
+                    ],
+                  );
+                } else {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        topSection,
+                        listWidget,
+                      ],
+                    ),
+                  );
+                }
+              },
             ),
     );
   }
 
-  Widget _buildRecordPicsRow(List<Expense> pics) {
+  Widget _buildRecordPicsRow(List<Expense> pics, bool isPortrait) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -480,7 +509,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
           ),
         ),
         SizedBox(
-          height: 115,
+          height: isPortrait ? 115 : 85,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -492,7 +521,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                 child: GestureDetector(
                   onTap: () => _viewFullImage(e.imageBase64!, e.noteText),
                   child: Container(
-                    width: 115,
+                    width: isPortrait ? 115 : 85,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: const Color(0xFFEBEFF5), width: 1.5),

@@ -96,10 +96,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () => provider.loadDashboard(),
-        color: AppColors.primary,
-        child: OrientationBuilder(
+      body: OrientationBuilder(
           builder: (context, orientation) {
             final isPortrait = orientation == Orientation.portrait;
             final topSection = Column(
@@ -107,7 +104,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
               // Greeting & Balance Header Card
               Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: isPortrait ? 12 : 6),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -133,7 +130,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   // Gradient Total Spending Card
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(22),
+                    padding: EdgeInsets.all(isPortrait ? 22 : 14),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [AppColors.primaryDark, AppColors.primary],
@@ -174,14 +171,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(height: 10),
                         Text(
                           Formatters.currency(provider.grandTotal, symbol: auth.currencySymbol),
-                          style: const TextStyle(
-                            fontSize: 36,
+                          style: TextStyle(
+                            fontSize: isPortrait ? 36 : 28,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
                             letterSpacing: -0.5,
                           ),
                         ),
-                        const SizedBox(height: 18),
+                        SizedBox(height: isPortrait ? 18 : 8),
                         
                         // Budget limit progress row
                         Column(
@@ -264,18 +261,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   topSection,
-                  Expanded(child: _buildBody(provider, isPortrait: true)),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () => provider.loadDashboard(),
+                      color: AppColors.primary,
+                      child: _buildBody(provider, isPortrait: true),
+                    ),
+                  ),
                 ],
               );
             } else {
-              return SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    topSection,
-                    _buildBody(provider, isPortrait: false),
-                  ],
+              return RefreshIndicator(
+                onRefresh: () => provider.loadDashboard(),
+                color: AppColors.primary,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      topSection,
+                      _buildBody(provider, isPortrait: false),
+                    ],
+                  ),
                 ),
               );
             }

@@ -170,16 +170,19 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Amount Card
-            GestureDetector(
-              onTap: () => setState(() => _showNumberPad = true),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+        child: OrientationBuilder(
+          builder: (context, orientation) {
+            final isPortrait = orientation == Orientation.portrait;
+            final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+            final hideAmountCard = !isPortrait && isKeyboardOpen;
+                
+                final amountCard = GestureDetector(
+                  onTap: () => setState(() => _showNumberPad = true),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: isPortrait ? 10 : 4),
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(vertical: isPortrait ? 24 : 12, horizontal: 20),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [AppColors.primaryDark, AppColors.primary],
@@ -216,8 +219,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                             _amount.isEmpty
                                 ? '$symbol 0'
                                 : Formatters.currency(int.parse(_amount), symbol: symbol),
-                            style: const TextStyle(
-                              fontSize: 48,
+                            style: TextStyle(
+                              fontSize: isPortrait ? 48 : 32,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
                               letterSpacing: -1,
@@ -232,9 +235,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ),
             
             // Category & Pad Section
-            Expanded(
-              child: Container(
-                width: double.infinity,
+            final middleSection = Container(
+              width: double.infinity,
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
@@ -249,8 +251,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     ),
                   ],
                 ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(32),
+                    topRight: Radius.circular(32),
+                  ),
+                  child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.all(isPortrait ? 24 : 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -310,7 +318,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         },
                         child: Container(
                           width: double.infinity,
-                          height: 120,
+                          height: isPortrait ? 120 : 80,
                           decoration: BoxDecoration(
                             color: const Color(0xFFF7F9FC),
                             borderRadius: BorderRadius.circular(16),
@@ -464,7 +472,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ),
             
             // Save Button Action
-            Container(
+            final bottomButton = Container(
               color: Colors.white,
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
               child: Container(
@@ -517,8 +525,19 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         ),
                 ),
               ),
-            ),
-          ],
+            );
+
+              ),
+            );
+
+            return Column(
+              children: [
+                if (!hideAmountCard) amountCard,
+                Expanded(child: middleSection),
+                bottomButton,
+              ],
+            );
+          },
         ),
       ),
     );
