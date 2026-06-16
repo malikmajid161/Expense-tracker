@@ -99,11 +99,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: RefreshIndicator(
         onRefresh: () => provider.loadDashboard(),
         color: AppColors.primary,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Greeting & Balance Header Card
-            Padding(
+        child: OrientationBuilder(
+          builder: (context, orientation) {
+            final isPortrait = orientation == Orientation.portrait;
+            final topSection = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+              // Greeting & Balance Header Card
+              Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,11 +256,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             
-            // Body categories list
-            Expanded(
-              child: _buildBody(provider),
-            ),
-          ],
+              ],
+            );
+
+            if (isPortrait) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  topSection,
+                  Expanded(child: _buildBody(provider, isPortrait: true)),
+                ],
+              );
+            } else {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    topSection,
+                    _buildBody(provider, isPortrait: false),
+                  ],
+                ),
+              );
+            }
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -277,14 +299,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildBody(ExpenseProvider provider) {
+  Widget _buildBody(ExpenseProvider provider, {required bool isPortrait}) {
     final auth = context.watch<AuthProvider>();
     if (provider.loading && provider.categories.isEmpty) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+      return const Padding(
+        padding: EdgeInsets.all(40),
+        child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
     }
 
     if (provider.error != null && provider.categories.isEmpty) {
       return _MessageView(
+        isPortrait: isPortrait,
         icon: Icons.wifi_off_rounded,
         title: 'Could not load dashboard',
         message: provider.error!,
@@ -294,7 +320,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     if (provider.categories.isEmpty) {
-      return const _MessageView(
+      return _MessageView(
+        isPortrait: isPortrait,
         icon: Icons.add_chart_rounded,
         title: 'No spending accounts',
         message: 'Tap "Add Expense" to record your first transaction.',
@@ -302,6 +329,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     return ListView.separated(
+      shrinkWrap: !isPortrait,
+      physics: isPortrait ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
       itemCount: provider.categories.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -333,6 +362,7 @@ class _MessageView extends StatelessWidget {
   final String message;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final bool isPortrait;
 
   const _MessageView({
     required this.icon,
@@ -340,11 +370,14 @@ class _MessageView extends StatelessWidget {
     required this.message,
     this.actionLabel,
     this.onAction,
+    this.isPortrait = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return ListView(
+      shrinkWrap: !isPortrait,
+      physics: isPortrait ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
       children: [
         Icon(icon, size: 64, color: AppColors.textSecondary.withOpacity(0.5)),
