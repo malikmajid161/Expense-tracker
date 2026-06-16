@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker Viva Cheat Sheet</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #f9fbfd;
+        }
+        h1, h2, h3 {
+            color: #1e3a8a;
+            border-bottom: 2px solid #dbeafe;
+            padding-bottom: 8px;
+            margin-top: 30px;
+        }
+        h1 { font-size: 2.2rem; text-align: center; border-bottom: none; margin-top: 10px; }
+        .subtitle { text-align: center; color: #64748b; font-size: 1.1rem; margin-bottom: 40px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-weight: 600;
+        }
+        td code {
+            background-color: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #db2777;
+            font-size: 0.9em;
+        }
+        .box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 5px solid #3b82f6;
+            margin-bottom: 20px;
+        }
+        .success { border-left-color: #10b981; }
+        .warning { border-left-color: #f59e0b; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <h1>🚀 Viva Cheat Sheet: Expense Tracker (My Khata)</h1>
+    <div class="subtitle">Complete Technical Breakdown & Interview Guide</div>
+
+    <h2>1. Overall Architecture & Tech Stack</h2>
+    <div class="box">
+        <ul>
+            <li><strong>Frontend:</strong> Flutter & Dart (Cross-platform UI)</li>
+            <li><strong>Backend (BaaS):</strong> Supabase (PostgreSQL Database, Authentication)</li>
+            <li><strong>State Management:</strong> Provider Pattern</li>
+            <li><strong>Local Storage:</strong> SharedPreferences (For offline caching & settings)</li>
+            <li><strong>Environment Management:</strong> <code>flutter_dotenv</code> (for hiding API keys)</li>
+        </ul>
+    </div>
+
+    <h2>2. Project Directory Structure</h2>
+    <table>
+        <tr>
+            <th>Directory / File</th>
+            <th>Purpose</th>
+        </tr>
+        <tr>
+            <td><code>lib/main.dart</code></td>
+            <td>Entry point of the app. Initializes Supabase, loads <code>.env</code> file, and injects Providers.</td>
+        </tr>
+        <tr>
+            <td><code>lib/models/</code></td>
+            <td>Data structures (e.g., <code>Expense</code>, <code>Category</code>) that represent database rows.</td>
+        </tr>
+        <tr>
+            <td><code>lib/providers/</code></td>
+            <td>State Management logic (<code>auth_provider.dart</code>, <code>expense_provider.dart</code>).</td>
+        </tr>
+        <tr>
+            <td><code>lib/screens/</code></td>
+            <td>UI Views/Pages (Login, Dashboard, Profile, Add Expense, etc.).</td>
+        </tr>
+        <tr>
+            <td><code>lib/services/</code></td>
+            <td>Backend API communication files (Supabase setup, DB queries, Auth).</td>
+        </tr>
+        <tr>
+            <td><code>lib/theme/</code></td>
+            <td>Global colors, fonts, and styling for consistent UI design.</td>
+        </tr>
+        <tr>
+            <td><code>.env</code></td>
+            <td>Hidden file containing secure <strong>Supabase URL</strong> and <strong>Anon Key</strong>.</td>
+        </tr>
+    </table>
+
+    <h2>3. State Management (Provider)</h2>
+    <div class="box warning">
+        <strong>Question: "Which state management did you use and why?"</strong><br><br>
+        <strong>Answer:</strong> "I used the <strong>Provider</strong> package. It separates the Business Logic from the UI. Instead of using <code>setState()</code> everywhere, which rebuilds the whole screen and makes the app slow, Provider uses <code>ChangeNotifier</code>. When data changes (like adding a new expense), it calls <code>notifyListeners()</code>, which updates <em>only</em> the widgets listening to that specific data. It makes the code clean and memory efficient."
+    </div>
+    <ul>
+        <li><code>AuthProvider</code>: Manages login state, current user, budget limit, and currency.</li>
+        <li><code>ExpenseProvider</code>: Manages the list of expenses, calculates total spending, and fetches categories.</li>
+    </ul>
+
+    <h2>4. Database & Authentication (Supabase)</h2>
+    <div class="box success">
+        <strong>Question: "How did you connect the database and authentication?"</strong><br><br>
+        <strong>Answer:</strong> "I used <strong>Supabase</strong>, an open-source Firebase alternative based on PostgreSQL. The connection is established in <code>lib/main.dart</code> by calling <code>Supabase.initialize()</code>. We pass it our Supabase URL and Anon Key, which are safely read from the <code>.env</code> file. For authentication, Supabase handles JWT tokens automatically."
+    </div>
+    
+    <h3>Where is the Backend Code written?</h3>
+    <table>
+        <tr>
+            <th>File</th>
+            <th>What it does</th>
+        </tr>
+        <tr>
+            <td><code>supabase_service.dart</code></td>
+            <td>Core connection setup. Reads the API keys and exposes the global <code>SupabaseClient</code>.</td>
+        </tr>
+        <tr>
+            <td><code>auth_service.dart</code></td>
+            <td>Handles Supabase Auth commands like <code>signIn()</code>, <code>signUp()</code>, and <code>signOut()</code>.</td>
+        </tr>
+        <tr>
+            <td><code>database_service.dart</code></td>
+            <td>Writes/Reads SQL data from the Supabase PostgreSQL database tables (e.g. inserting an expense).</td>
+        </tr>
+    </table>
+
+    <h2>5. Screens & Widget Breakdown</h2>
+    <p>The UI is composed of 6 main screens and roughly dozens of custom widgets.</p>
+    <ul>
+        <li><code>auth_gate.dart</code>: A smart widget that listens to auth state. If the user is logged in, it shows the Dashboard. If logged out, it shows Login.</li>
+        <li><code>login_screen.dart</code>: UI with text fields for Email/Password, handles Auth exceptions, and includes an Offline Demo mode.</li>
+        <li><code>dashboard_screen.dart</code>: The main home page. Shows pie charts, summary cards, and the list of recent expenses.</li>
+        <li><code>add_expense_screen.dart</code>: A form with amount, title, date picker, and category dropdown to insert data into Supabase.</li>
+        <li><code>profile_screen.dart</code>: User settings. Saves Display Name and Budget Limit immediately when tapping outside the text boxes (onTapOutside).</li>
+        <li><code>category_detail_screen.dart</code>: Shows all expenses filtered by a specific category.</li>
+    </ul>
+
+    <h2>6. VS Code / IDE Shortcut Cheat Sheet</h2>
+    <table>
+        <tr>
+            <th>Shortcut (Windows)</th>
+            <th>What it does (Tell the teacher!)</th>
+        </tr>
+        <tr>
+            <td><code>Ctrl + P</code></td>
+            <td><strong>Quick Open File:</strong> Instantly search and jump to any file by name.</td>
+        </tr>
+        <tr>
+            <td><code>Ctrl + Shift + F</code></td>
+            <td><strong>Global Search:</strong> Search for a specific word or function across the entire project.</td>
+        </tr>
+        <tr>
+            <td><code>F12</code> (or Ctrl + Click)</td>
+            <td><strong>Go to Definition:</strong> Click on any function or widget to jump to where it is written.</td>
+        </tr>
+        <tr>
+            <td><code>Alt + Shift + F</code></td>
+            <td><strong>Format Document:</strong> Automatically indents and beautifies the Flutter code.</td>
+        </tr>
+        <tr>
+            <td><code>Ctrl + .</code> (Dot)</td>
+            <td><strong>Quick Fix / Refactor:</strong> Wrap a widget in a Container, Column, or Padding instantly.</td>
+        </tr>
+    </table>
+
+    <br>
+    <div style="text-align: center; color: #64748b; font-size: 0.9em; margin-top: 30px;">
+        <em>Pro Tip: Open this file in Chrome and press <strong>Ctrl + P</strong> to save it as a high-quality PDF!</em>
+    </div>
+
+</body>
+</html>

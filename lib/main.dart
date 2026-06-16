@@ -23,7 +23,9 @@ Future<void> main() async {
     SupabaseService.useOfflineMode = isOffline;
 
     if (!isOffline) {
-      await SupabaseService.init();
+      await SupabaseService.init().timeout(
+        const Duration(seconds: 10),
+      );
     }
   } catch (e) {
     startupError = e.toString().replaceAll('Exception: ', '');
