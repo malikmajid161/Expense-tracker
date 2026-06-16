@@ -232,7 +232,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   ),
                 ),
               ),
-            ),
+            );
             
             // Category & Pad Section
             final middleSection = Container(
@@ -469,7 +469,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   ),
                 ),
               ),
-            ),
+            );
             
             // Save Button Action
             final bottomButton = Container(
@@ -523,12 +523,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                             ),
                           ],
                         ),
+                  ),
                 ),
-              ),
-            );
-
-              ),
-            );
+              );
 
             return Column(
               children: [

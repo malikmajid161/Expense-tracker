@@ -288,7 +288,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             }
           },
         ),
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openAddExpense,
         backgroundColor: AppColors.primary,
